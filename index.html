@@ -43,6 +43,904 @@ const AREA_THEME_COLORS = [
   { r: 80, g: 55, b: 65, border: '#cc7788' }, { r: 50, g: 70, b: 85, border: '#66aacc' }  
 ];
 
+// ★ ガリ（GALLI）3Dポリゴンデータ
+const GALLI_3D_MESH = {
+  vertices: [
+    {x:-10, y:-12, z:-4}, {x:-3, y:-12, z:-4}, {x:-3, y:2, z:-4}, {x:-10, y:2, z:-4},
+    {x:-10, y:-12, z: 4}, {x:-3, y:-12, z: 4}, {x:-3, y:2, z: 4}, {x:-10, y:2, z: 4},
+    {x:-6.5, y:7, z:0},
+    {x: 3, y:-12, z:-4}, {x: 10, y:-12, z:-4}, {x: 10, y:0, z:-4}, {x: 3, y:0, z:-4},
+    {x: 3, y:-12, z: 4}, {x: 10, y:-12, z: 4}, {x: 10, y:0, z: 4}, {x: 3, y:0, z: 4},
+    {x: 6.5, y:5, z:0},
+    {x:-11, y:1, z:-1}, {x:-5, y:1, z:-1}, {x:-5, y:13, z:-1}, {x:-11, y:11, z:-1},
+    {x:-11, y:1, z: 1}, {x:-5, y:1, z: 1}, {x:-5, y:13, z: 1}, {x:-11, y:11, z: 1},
+    {x:-3, y:-6, z:-2}, {x: 3, y:-6, z:-2}, {x: 3, y:-2, z:-2}, {x:-3, y:-2, z:-2},
+    {x:-3, y:-6, z: 2}, {x: 3, y:-6, z: 2}, {x: 3, y:-2, z: 2}, {x:-3, y:-2, z: 2}
+  ],
+  faces: [
+    { v: [0, 1, 2, 3], c: '#ff3366' }, { v: [5, 4, 7, 6], c: '#ff2255' },
+    { v: [4, 0, 3, 7], c: '#e62e5c' }, { v: [1, 5, 6, 2], c: '#ff4d79' },
+    { v: [0, 4, 5, 1], c: '#ff3366' },
+    { v: [3, 2, 8], c: '#ff668c' }, { v: [2, 6, 8], c: '#e62e5c' },
+    { v: [6, 7, 8], c: '#cc2952' }, { v: [7, 3, 8], c: '#ff4d79' },
+    { v: [9, 10, 11, 12], c: '#ff3366' }, { v: [14, 13, 16, 15], c: '#ff2255' },
+    { v: [13, 9, 12, 16], c: '#ff4d79' }, { v: [10, 14, 15, 11], c: '#e62e5c' },
+    { v: [9, 13, 14, 10], c: '#ff3366' },
+    { v: [12, 11, 17], c: '#ff668c' }, { v: [11, 15, 17], c: '#e62e5c' },
+    { v: [15, 16, 17], c: '#cc2952' }, { v: [16, 12, 17], c: '#ff4d79' },
+    { v: [18, 19, 20, 21], c: '#ff2255' }, { v: [23, 22, 25, 24], c: '#e62e5c' },
+    { v: [22, 18, 21, 25], c: '#ff4d79' }, { v: [19, 23, 24, 20], c: '#cc2952' },
+    { v: [26, 27, 28, 29], c: '#ffffff' }, { v: [31, 30, 33, 32], c: '#cccccc' },
+    { v: [30, 26, 29, 33], c: '#ffffff' }, { v: [27, 31, 32, 28], c: '#aaaaaa' }
+  ]
+};
+
+function draw3DGalli(c, w, h, baseColor, rotYAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let scale = w / 28.0;
+  let cameraDist = 350;
+  let rotX = 0.4;
+  let rotY = rotYAnim || 0;
+
+  let cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  let cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  let transformed = GALLI_3D_MESH.vertices.map(v => {
+    let x1 = v.x * cosY + v.z * sinY;
+    let z1 = -v.x * sinY + v.z * cosY;
+    let y2 = v.y * cosX - z1 * sinX;
+    let z2 = v.y * sinX + z1 * cosX;
+    let perspective = cameraDist / (cameraDist + z2 + 100);
+    return { x: x1 * scale * perspective, y: y2 * scale * perspective, z: z2 };
+  });
+
+  let renderFaces = GALLI_3D_MESH.faces.map(f => {
+    let pts = f.v.map(idx => transformed[idx]);
+    let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length;
+    let v0 = pts[0], v1 = pts[1], v2 = pts[2];
+    let nx = (v1.y - v0.y) * (v2.z - v0.z) - (v1.z - v0.z) * (v2.y - v0.y);
+    let ny = (v1.z - v0.z) * (v2.x - v0.x) - (v1.x - v0.x) * (v2.z - v0.z);
+    let nz = (v1.x - v0.x) * (v2.y - v0.y) - (v1.y - v0.y) * (v2.z - v0.z);
+    return { pts, color: f.c, z: avgZ, isFront: nz > 0 };
+  });
+
+  renderFaces.sort((a, b) => b.z - a.z);
+
+  renderFaces.forEach(f => {
+    if (!f.isFront) return;
+    c.beginPath(); c.moveTo(f.pts[0].x, f.pts[0].y);
+    for (let i = 1; i < f.pts.length; i++) c.lineTo(f.pts[i].x, f.pts[i].y);
+    c.closePath(); c.fillStyle = f.color; c.fill();
+    c.strokeStyle = "rgba(255, 255, 255, 0.25)"; c.lineWidth = 0.8; c.stroke();
+  });
+  c.restore();
+}
+
+// ★ エトリ（ETTORI）紫系 3Dポリゴンデータ ＆ 描画関数
+function createFlatEttoriMesh() {
+  let vertices = [];
+  let faces = [];
+  const sides = 8, rFlat = 5, rMid = 12, rInner = 9;
+  const yTop = -12, yUpperMid = -4, yLowerMid = 4, yBot = 12;
+
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    vertices.push({ x: Math.cos(a) * rFlat, y: yTop, z: Math.sin(a) * rFlat });
+  }
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    vertices.push({ x: Math.cos(a) * rMid, y: yUpperMid, z: Math.sin(a) * rMid });
+  }
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    vertices.push({ x: Math.cos(a) * rInner, y: yUpperMid + 1.5, z: Math.sin(a) * rInner });
+  }
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    vertices.push({ x: Math.cos(a) * rInner, y: yLowerMid - 1.5, z: Math.sin(a) * rInner });
+  }
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    vertices.push({ x: Math.cos(a) * rMid, y: yLowerMid, z: Math.sin(a) * rMid });
+  }
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    vertices.push({ x: Math.cos(a) * rFlat, y: yBot, z: Math.sin(a) * rFlat });
+  }
+
+  faces.push({ v: [0, 1, 2, 3, 4, 5, 6, 7], c: '#f0d0ff' });
+  for (let i = 0; i < sides; i++) {
+    let t1 = i, t2 = (i + 1) % sides, m1 = i + 8, m2 = (i + 1) % sides + 8;
+    faces.push({ v: [t1, m1, m2, t2], c: (i % 2 === 0) ? '#d880ff' : '#a040e0' });
+  }
+  for (let i = 0; i < sides; i++) {
+    let m1 = i + 8, m2 = (i + 1) % sides + 8, in1 = i + 16, in2 = (i + 1) % sides + 16;
+    faces.push({ v: [m1, in1, in2, m2], c: (i % 2 === 0) ? '#7722aa' : '#551188' });
+  }
+  for (let i = 0; i < sides; i++) {
+    let in1 = i + 16, in2 = (i + 1) % sides + 16, in3 = (i + 1) % sides + 24, in4 = i + 24;
+    faces.push({ v: [in1, in4, in3, in2], c: (i % 2 === 0) ? '#220033' : '#330055' });
+  }
+  for (let i = 0; i < sides; i++) {
+    let in4 = i + 24, in3 = (i + 1) % sides + 24, lm1 = i + 32, lm2 = (i + 1) % sides + 32;
+    faces.push({ v: [in4, lm1, lm2, in3], c: (i % 2 === 0) ? '#551188' : '#330066' });
+  }
+  for (let i = 0; i < sides; i++) {
+    let lm1 = i + 32, lm2 = (i + 1) % sides + 32, b1 = i + 40, b2 = (i + 1) % sides + 40;
+    faces.push({ v: [lm1, b1, b2, lm2], c: (i % 2 === 0) ? '#8833bb' : '#662299' });
+  }
+  faces.push({ v: [47, 46, 45, 44, 43, 42, 41, 40], c: '#330044' });
+
+  return { vertices, faces };
+}
+
+const ETTORI_3D_MESH = createFlatEttoriMesh();
+
+function draw3DEttori(c, w, h, baseColor, rotYAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let scale = w / 28.0;
+  let cameraDist = 350;
+  let rotX = 0;
+  let rotY = rotYAnim || 0;
+
+  let cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  let cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  let transformed = ETTORI_3D_MESH.vertices.map(v => {
+    let x1 = v.x * cosY + v.z * sinY;
+    let z1 = -v.x * sinY + v.z * cosY;
+    let y2 = v.y * cosX - z1 * sinX;
+    let z2 = v.y * sinX + z1 * cosX;
+    let perspective = cameraDist / (cameraDist + z2 + 100);
+    return { x: x1 * scale * perspective, y: y2 * scale * perspective, z: z2 };
+  });
+
+  let renderFaces = ETTORI_3D_MESH.faces.map(f => {
+    let pts = f.v.map(idx => transformed[idx]);
+    let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length;
+    let v0 = pts[0], v1 = pts[1], v2 = pts[2];
+    let nx = (v1.y - v0.y) * (v2.z - v0.z) - (v1.z - v0.z) * (v2.y - v0.y);
+    let ny = (v1.z - v0.z) * (v2.x - v0.x) - (v1.x - v0.x) * (v2.z - v0.z);
+    let nz = (v1.x - v0.x) * (v2.y - v0.y) - (v1.y - v0.y) * (v2.x - v0.x);
+    return { pts, color: f.c, z: avgZ, isFront: nz >= 0 };
+  });
+
+  renderFaces.sort((a, b) => b.z - a.z);
+
+  renderFaces.forEach(f => {
+    if (!f.isFront) return;
+    c.beginPath(); c.moveTo(f.pts[0].x, f.pts[0].y);
+    for (let i = 1; i < f.pts.length; i++) c.lineTo(f.pts[i].x, f.pts[i].y);
+    c.closePath(); c.fillStyle = f.color; c.fill();
+    c.strokeStyle = "rgba(255, 200, 255, 0.4)"; c.lineWidth = 0.8; c.stroke();
+  });
+  c.restore();
+}
+
+// ★ 赤系 B-2ステルス全翼機スタイル キリ (QUIRI) 完全3Dポリゴンデータ ＆ 描画関数
+function createRedB2StyleQuiriMesh() {
+  let vertices = [];
+  let faces = [];
+
+  const t = 2.0;
+
+  vertices.push({ x:   0, y:  14, z:  t }); // 0
+  vertices.push({ x:   0, y:  14, z: -t }); // 1
+  vertices.push({ x: -18, y: -10, z:  t * 0.6 }); // 2
+  vertices.push({ x: -18, y: -10, z: -t * 0.6 }); // 3
+  vertices.push({ x:  -8, y:  -2, z:  t }); // 4
+  vertices.push({ x:  -8, y:  -2, z: -t }); // 5
+  vertices.push({ x:   0, y:   2, z:  t }); // 6
+  vertices.push({ x:   0, y:   2, z: -t }); // 7
+  vertices.push({ x:   8, y:  -2, z:  t }); // 8
+  vertices.push({ x:   8, y:  -2, z: -t }); // 9
+  vertices.push({ x:  18, y: -10, z:  t * 0.6 }); // 10
+  vertices.push({ x:  18, y: -10, z: -t * 0.6 }); // 11
+  vertices.push({ x:   0, y:   8, z:  t + 1.5 }); // 12
+
+  vertices.push({ x: -12, y:  -3, z:  t + 0.15 }); // 13
+  vertices.push({ x:  -7, y:   3, z:  t + 0.15 }); // 14
+  vertices.push({ x:  -6, y:   1, z:  t + 0.15 }); // 15
+  vertices.push({ x: -11, y:  -5, z:  t + 0.15 }); // 16
+
+  vertices.push({ x:  12, y:  -3, z:  t + 0.15 }); // 17
+  vertices.push({ x:   7, y:   3, z:  t + 0.15 }); // 18
+  vertices.push({ x:   6, y:   1, z:  t + 0.15 }); // 19
+  vertices.push({ x:  11, y:  -5, z:  t + 0.15 }); // 20
+
+  faces.push({ v: [0, 2, 4], c: '#ff3333' });
+  faces.push({ v: [0, 4, 12], c: '#ff5555' });
+  faces.push({ v: [0, 12, 8], c: '#ff3333' });
+  faces.push({ v: [0, 8, 10], c: '#ff5555' });
+  faces.push({ v: [4, 6, 12], c: '#cc1111' });
+  faces.push({ v: [12, 6, 8], c: '#aa0000' });
+
+  faces.push({ v: [13, 14, 15, 16], c: '#220000' });
+  faces.push({ v: [17, 18, 19, 20], c: '#220000' });
+
+  faces.push({ v: [1, 5, 3], c: '#880000' });
+  faces.push({ v: [1, 7, 5], c: '#660000' });
+  faces.push({ v: [1, 9, 7], c: '#660000' });
+  faces.push({ v: [1, 11, 9], c: '#880000' });
+
+  faces.push({ v: [0, 1, 3, 2], c: '#ff7777' });
+  faces.push({ v: [0, 10, 11, 1], c: '#ff9999' });
+  faces.push({ v: [2, 3, 5, 4], c: '#aa0000' });
+  faces.push({ v: [10, 8, 9, 11], c: '#880000' });
+  faces.push({ v: [4, 5, 7, 6], c: '#550000' });
+  faces.push({ v: [8, 6, 7, 9], c: '#550000' });
+
+  return { vertices, faces };
+}
+
+const QUIRI_3D_MESH = createRedB2StyleQuiriMesh();
+
+function draw3DQuiri(c, w, h, baseColor, rotYAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let scale = w / 32.0;
+  let cameraDist = 350;
+  let rotX = 0.45;
+  let rotY = rotYAnim || 0;
+
+  let cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  let cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  let transformed = QUIRI_3D_MESH.vertices.map(v => {
+    let x1 = v.x * cosY + v.z * sinY;
+    let z1 = -v.x * sinY + v.z * cosY;
+    let y2 = v.y * cosX - z1 * sinX;
+    let z2 = v.y * sinX + z1 * cosX;
+    let perspective = cameraDist / (cameraDist + z2 + 100);
+    return { x: x1 * scale * perspective, y: y2 * scale * perspective, z: z2 };
+  });
+
+  let renderFaces = QUIRI_3D_MESH.faces.map(f => {
+    let pts = f.v.map(idx => transformed[idx]);
+    let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length;
+    return { pts, color: f.c, z: avgZ };
+  });
+
+  renderFaces.sort((a, b) => b.z - a.z);
+
+  renderFaces.forEach(f => {
+    c.beginPath();
+    c.moveTo(f.pts[0].x, f.pts[0].y);
+    for (let i = 1; i < f.pts.length; i++) {
+      c.lineTo(f.pts[i].x, f.pts[i].y);
+    }
+    c.closePath();
+    c.fillStyle = f.color;
+    c.fill();
+    c.strokeStyle = "rgba(255, 200, 200, 0.4)";
+    c.lineWidth = 0.8;
+    c.stroke();
+  });
+  c.restore();
+}
+
+// ★ ティッタ（TITTA）超軽量2D+ベベル3D描画
+function draw2D3DStyleTitta(c, w, h, baseColor, rotYAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  c.rotate(rotYAnim || 0);
+
+  let r = w / 2;
+  c.beginPath();
+  c.arc(0, 0, r, 0, Math.PI * 2);
+  let sphereGrad = c.createRadialGradient(-r * 0.2, -r * 0.2, r * 0.1, 0, 0, r);
+  sphereGrad.addColorStop(0, '#ffffff');
+  sphereGrad.addColorStop(0.3, baseColor || '#00e5ff');
+  sphereGrad.addColorStop(0.85, '#0088cc');
+  sphereGrad.addColorStop(1, '#004466');
+  c.fillStyle = sphereGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  c.lineWidth = 1;
+  c.stroke();
+
+  let gw = r * 0.28;
+  c.fillStyle = '#111e2e';
+  c.fillRect(-r, -gw / 2, r * 2, gw);
+  c.fillRect(-gw / 2, -r, gw, r * 2);
+
+  c.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  c.fillRect(-r, -gw / 2, r * 2, 2);
+  c.fillRect(-gw / 2, -r, 2, r * 2);
+
+  c.fillStyle = 'rgba(255, 255, 255, 0.35)';
+  c.fillRect(-r, gw / 2 - 1.5, r * 2, 1.5);
+  c.fillRect(gw / 2 - 1.5, -r, 1.5, r * 2);
+
+  const margin = gw / 2 + 0.5;
+  const pSize = r - margin;
+
+  function drawDomePanel(xSign, ySign) {
+    c.save();
+    c.beginPath();
+    let px = xSign * margin;
+    let py = ySign * margin;
+    c.moveTo(px, py);
+    c.lineTo(px + xSign * pSize, py);
+    c.arc(0, 0, r - 0.5, Math.atan2(py, px + xSign * pSize), Math.atan2(py + ySign * pSize, px), (xSign * ySign < 0));
+    c.lineTo(px, py + ySign * pSize);
+    c.closePath();
+
+    let pGrad = c.createRadialGradient(xSign * r * 0.3, ySign * r * 0.3, r * 0.05, 0, 0, r);
+    pGrad.addColorStop(0, '#ffffff');
+    pGrad.addColorStop(0.35, baseColor || '#00e5ff');
+    pGrad.addColorStop(0.85, '#0088cc');
+    pGrad.addColorStop(1, '#004477');
+
+    c.fillStyle = pGrad;
+    c.fill();
+    c.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    c.lineWidth = 0.8;
+    c.stroke();
+    c.restore();
+  }
+
+  drawDomePanel(1, -1);
+  drawDomePanel(-1, -1);
+  drawDomePanel(-1, 1);
+  drawDomePanel(1, 1);
+
+  c.beginPath();
+  c.arc(0, 0, gw * 0.8, 0, Math.PI * 2);
+  c.fillStyle = '#223344';
+  c.fill();
+  c.strokeStyle = '#00ffff';
+  c.lineWidth = 1;
+  c.stroke();
+
+  c.beginPath();
+  c.arc(0, 0, gw * 0.35, 0, Math.PI * 2);
+  c.fillStyle = '#ffffff';
+  c.fill();
+
+  c.restore();
+}
+
+// ★ ゾフ（ZOFF）固定向き超軽量3D風描画
+function draw2D3DStyleZoff(c, w, h, baseColor) {
+  c.save();
+  c.translate(w / 2, h / 2);
+
+  let r = w / 2;
+  let mainColor = baseColor || '#ff6633';
+
+  c.save();
+  c.beginPath();
+  c.arc(0, r * 0.1, r * 0.9, 0, Math.PI, false);
+  c.lineTo(-r * 0.9, -r * 0.6);
+  c.lineTo(-r * 0.55, -r * 0.6);
+  c.lineTo(-r * 0.55, r * 0.1);
+  c.arc(0, r * 0.1, r * 0.55, Math.PI, 0, true);
+  c.lineTo(r * 0.55, -r * 0.6);
+  c.lineTo(r * 0.9, -r * 0.6);
+  c.closePath();
+
+  let uGrad = c.createLinearGradient(-r, -r, r, r);
+  uGrad.addColorStop(0, '#ffffff');
+  uGrad.addColorStop(0.3, mainColor);
+  uGrad.addColorStop(0.85, '#cc3300');
+  uGrad.addColorStop(1, '#661100');
+  c.fillStyle = uGrad;
+  c.fill();
+
+  c.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  c.lineWidth = 1;
+  c.stroke();
+  c.restore();
+
+  c.fillStyle = '#223344';
+  c.fillRect(-r * 0.55, -r * 0.25, r * 1.1, r * 0.25);
+  c.fillStyle = '#ffffff';
+  c.fillRect(-r * 0.45, -r * 0.2, r * 0.2, r * 0.15);
+  c.fillRect(r * 0.25, -r * 0.2, r * 0.2, r * 0.15);
+
+  c.save();
+  c.beginPath();
+  c.ellipse(0, -r * 0.05, r * 0.32, r * 0.7, 0, 0, Math.PI * 2);
+
+  let podGrad = c.createRadialGradient(0, -r * 0.3, r * 0.05, 0, 0, r * 0.6);
+  podGrad.addColorStop(0, '#ffffff');
+  podGrad.addColorStop(0.4, mainColor);
+  podGrad.addColorStop(0.85, '#aa2200');
+  podGrad.addColorStop(1, '#440000');
+
+  c.fillStyle = podGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+  c.lineWidth = 1.2;
+  c.stroke();
+
+  c.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  c.beginPath();
+  c.ellipse(0, -r * 0.25, r * 0.1, r * 0.25, 0, 0, Math.PI * 2);
+  c.fill();
+
+  c.restore();
+  c.restore();
+}
+
+// ★ フェラー（FAILLAR）固定向き超軽量3D風描画
+function draw2D3DStyleFaillar(c, w, h, baseColor) {
+  c.save();
+  c.translate(w / 2, h / 2);
+
+  let scale = w / 36.0;
+  let mainColor = baseColor || '#00ff88';
+
+  c.beginPath();
+  c.moveTo(-18 * scale, -14 * scale);
+  c.lineTo(-6 * scale,  -10 * scale);
+  c.lineTo(-6 * scale,   14 * scale);
+  c.lineTo(-12 * scale,   8 * scale);
+  c.closePath();
+  let lWingGrad = c.createLinearGradient(-18 * scale, 0, -6 * scale, 0);
+  lWingGrad.addColorStop(0, '#ffffff');
+  lWingGrad.addColorStop(0.3, mainColor);
+  lWingGrad.addColorStop(1, '#005522');
+  c.fillStyle = lWingGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  c.lineWidth = 1;
+  c.stroke();
+
+  c.beginPath();
+  c.moveTo(18 * scale, -14 * scale);
+  c.lineTo(6 * scale,  -10 * scale);
+  c.lineTo(6 * scale,   14 * scale);
+  c.lineTo(12 * scale,   8 * scale);
+  c.closePath();
+  let rWingGrad = c.createLinearGradient(18 * scale, 0, 6 * scale, 0);
+  rWingGrad.addColorStop(0, '#004411');
+  rWingGrad.addColorStop(0.7, mainColor);
+  rWingGrad.addColorStop(1, '#ffffff');
+  c.fillStyle = rWingGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  c.lineWidth = 1;
+  c.stroke();
+
+  c.fillStyle = '#006633';
+  c.fillRect(-8 * scale, -12 * scale, 3 * scale, 22 * scale);
+  c.fillRect( 5 * scale, -12 * scale, 3 * scale, 22 * scale);
+
+  c.beginPath();
+  c.moveTo(-5 * scale, -18 * scale);
+  c.lineTo( 5 * scale, -18 * scale);
+  c.lineTo( 5 * scale,  16 * scale);
+  c.lineTo(-5 * scale,  16 * scale);
+  c.closePath();
+
+  let bodyGrad = c.createLinearGradient(-5 * scale, 0, 5 * scale, 0);
+  bodyGrad.addColorStop(0, '#ffffff');
+  bodyGrad.addColorStop(0.3, mainColor);
+  bodyGrad.addColorStop(0.7, '#00aa44');
+  bodyGrad.addColorStop(1, '#003311');
+  c.fillStyle = bodyGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+  c.lineWidth = 1;
+  c.stroke();
+
+  c.fillStyle = '#112211';
+  c.fillRect(-3 * scale, -6 * scale, 6 * scale, 14 * scale);
+  c.strokeStyle = 'rgba(0, 255, 136, 0.8)';
+  c.lineWidth = 1;
+  c.strokeRect(-3 * scale, -6 * scale, 6 * scale, 14 * scale);
+
+  c.fillStyle = '#ffffff';
+  c.beginPath();
+  c.arc(-1.2 * scale, -2 * scale, 1 * scale, 0, Math.PI * 2);
+  c.arc( 1.2 * scale, -2 * scale, 1 * scale, 0, Math.PI * 2);
+  c.fill();
+
+  c.fillStyle = '#00ffff';
+  c.fillRect(-1 * scale, 3 * scale, 2 * scale, 3.5 * scale);
+
+  c.restore();
+}
+
+// ★ メーウス（MEEUWS）発光コア＆被さりアーマー超軽量3D風描画
+function draw2D3DStyleMeeuws(c, w, h, baseColor) {
+  c.save();
+  c.translate(w / 2, h / 2);
+
+  let r = w / 2;
+  let mainColor = baseColor || '#00ccff';
+
+  let uWidth = r * 0.26;
+  let uDepth = r * 0.40;
+  let uYStart = -r * 0.88;
+
+  let coreR = r * 0.22;
+  let coreCY = -r * 0.02;
+
+  c.save();
+  c.beginPath();
+  c.arc(0, coreCY, coreR * 1.35, 0, Math.PI * 2);
+  c.fillStyle = '#050810';
+  c.fill();
+
+  c.shadowBlur = 15;
+  c.shadowColor = '#ff6600';
+
+  c.beginPath();
+  c.arc(0, coreCY, coreR, 0, Math.PI * 2);
+
+  let sphereGrad = c.createRadialGradient(-coreR * 0.35, coreCY - coreR * 0.35, coreR * 0.05, 0, coreCY, coreR);
+  sphereGrad.addColorStop(0, '#ffffff');
+  sphereGrad.addColorStop(0.25, '#ffff00');
+  sphereGrad.addColorStop(0.65, '#ff5500');
+  sphereGrad.addColorStop(1, '#881100');
+
+  c.fillStyle = sphereGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 200, 150, 0.9)';
+  c.lineWidth = 1;
+  c.stroke();
+
+  c.shadowBlur = 0;
+  c.fillStyle = '#ffffff';
+  c.beginPath();
+  c.arc(-coreR * 0.3, coreCY - coreR * 0.3, coreR * 0.25, 0, Math.PI * 2);
+  c.fill();
+  c.restore();
+
+  c.save();
+  c.beginPath();
+
+  let startAngle = Math.atan2(uYStart, -uWidth);
+  let endAngle = Math.atan2(uYStart, uWidth);
+
+  c.arc(0, 0, r * 0.88, endAngle, startAngle, false);
+  c.lineTo(-uWidth, uYStart);                       
+  c.lineTo(-uWidth, uDepth - r * 0.15);              
+  c.arc(0, uDepth - r * 0.15, uWidth, Math.PI, 0, true); 
+  c.lineTo(uWidth, uYStart);                        
+  c.closePath();
+
+  let outerGrad = c.createRadialGradient(-r * 0.35, -r * 0.35, r * 0.02, 0, 0, r * 0.95);
+  outerGrad.addColorStop(0, '#ffffff');
+  outerGrad.addColorStop(0.2, '#aaffff');
+  outerGrad.addColorStop(0.48, mainColor);
+  outerGrad.addColorStop(0.82, '#004488');
+  outerGrad.addColorStop(1, '#001122');
+
+  c.fillStyle = outerGrad;
+  c.fill();
+
+  c.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+  c.lineWidth = 1.5;
+  c.stroke();
+  c.restore();
+
+  c.save();
+  c.beginPath();
+  c.arc(0, uDepth - r * 0.15, uWidth, 0, Math.PI, false);
+  c.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+  c.lineWidth = 2.5;
+  c.stroke();
+
+  c.fillStyle = 'rgba(0, 10, 25, 0.6)';
+  c.fillRect(-uWidth, uYStart, r * 0.06, uDepth + r * 0.1);
+  c.restore();
+
+  c.save();
+  c.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+  c.lineWidth = 2;
+  c.beginPath();
+  c.arc(0, 0, r * 0.68, Math.PI * 0.22, Math.PI * 0.38, false);
+  c.stroke();
+
+  c.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  c.lineWidth = 1;
+  c.beginPath();
+  c.arc(0, 0, r * 0.72, Math.PI * 0.23, Math.PI * 0.37, false);
+  c.stroke();
+  c.restore();
+
+  c.restore();
+}
+
+// ★ オブセス（OBSESS）超軽量2D+ベベル3D描画
+function draw2D3DStyleObsess(c, w, h, baseColor, rotYAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  c.rotate(rotYAnim || 0);
+
+  let r = w * 0.45;
+  let mainColor = baseColor || '#ff00ff';
+
+  c.save();
+  c.shadowBlur = 12;
+  c.shadowColor = mainColor;
+
+  let topGrad = c.createLinearGradient(0, -r, 0, 0);
+  topGrad.addColorStop(0, '#ffffff');
+  topGrad.addColorStop(1, mainColor);
+  c.beginPath();
+  c.moveTo(0, -r); c.lineTo(r, 0); c.lineTo(0, 0); c.lineTo(-r, 0);
+  c.closePath();
+  c.fillStyle = topGrad;
+  c.fill();
+
+  let bottomGrad = c.createLinearGradient(0, 0, 0, r);
+  bottomGrad.addColorStop(0, mainColor);
+  bottomGrad.addColorStop(1, '#550055');
+  c.beginPath();
+  c.moveTo(-r, 0); c.lineTo(0, 0); c.lineTo(r, 0); c.lineTo(0, r);
+  c.closePath();
+  c.fillStyle = bottomGrad;
+  c.fill();
+
+  c.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+  c.lineWidth = 1.2;
+  c.beginPath();
+  c.moveTo(0, -r); c.lineTo(0, r);
+  c.moveTo(-r, 0); c.lineTo(r, 0);
+  c.stroke();
+  c.restore();
+
+  let rInner = r * 0.42;
+  c.save();
+  c.beginPath();
+  c.moveTo(0, -rInner); c.lineTo(rInner, 0); c.lineTo(0, rInner); c.lineTo(-rInner, 0);
+  c.closePath();
+
+  let innerGrad = c.createRadialGradient(0, 0, rInner * 0.1, 0, 0, rInner);
+  innerGrad.addColorStop(0, '#ffffff');
+  innerGrad.addColorStop(0.5, '#ff88ff');
+  innerGrad.addColorStop(1, '#aa00aa');
+
+  c.fillStyle = innerGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+  c.lineWidth = 1;
+  c.stroke();
+  c.restore();
+
+  let coreR = r * 0.18;
+  c.save();
+  c.beginPath();
+  c.arc(0, 0, coreR, 0, Math.PI * 2);
+
+  let coreGrad = c.createRadialGradient(-coreR * 0.3, -coreR * 0.3, coreR * 0.1, 0, 0, coreR);
+  coreGrad.addColorStop(0, '#ffffff');
+  coreGrad.addColorStop(0.4, '#ffff00');
+  coreGrad.addColorStop(1, '#ff0055');
+
+  c.fillStyle = coreGrad;
+  c.fill();
+  c.strokeStyle = '#ffffff';
+  c.lineWidth = 1;
+  c.stroke();
+
+  c.fillStyle = '#ffffff';
+  c.beginPath();
+  c.arc(-coreR * 0.3, -coreR * 0.3, coreR * 0.3, 0, Math.PI * 2);
+  c.fill();
+  c.restore();
+
+  c.restore();
+}
+
+// ★ リーバ（RIVA）多角形（八角形）アーマー＆イエロー発光コア描画
+function createOctagonPath(c, r) {
+  c.beginPath();
+  for (let i = 0; i < 8; i++) {
+    let a = (i * Math.PI / 4) + (Math.PI / 8);
+    let x = Math.cos(a) * r;
+    let y = Math.sin(a) * r;
+    if (i === 0) c.moveTo(x, y);
+    else c.lineTo(x, y);
+  }
+  c.closePath();
+}
+
+function draw2D3DStyleRiva(c, w, h, baseColor, rotYAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  c.rotate(rotYAnim || 0);
+
+  let r = w * 0.44;
+  let mainColor = baseColor || '#ffff00';
+
+  c.save();
+  createOctagonPath(c, r);
+
+  let sphereGrad = c.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
+  sphereGrad.addColorStop(0, '#ffffff');
+  sphereGrad.addColorStop(0.35, mainColor);
+  sphereGrad.addColorStop(0.8, '#cc9900');
+  sphereGrad.addColorStop(1, '#442200');
+
+  c.fillStyle = sphereGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 200, 0.7)';
+  c.lineWidth = 1.2;
+  c.stroke();
+  c.restore();
+
+  let bandW = r * 0.40;
+
+  c.save();
+  createOctagonPath(c, r);
+  c.clip();
+
+  c.beginPath();
+  c.rect(-bandW / 2, -r, bandW, r * 2);
+  c.rect(-r, -bandW / 2, r * 2, bandW);
+
+  let bandGrad = c.createLinearGradient(-r, -r, r, r);
+  bandGrad.addColorStop(0, '#ffffff');
+  bandGrad.addColorStop(0.3, '#ffffaa');
+  bandGrad.addColorStop(0.7, mainColor);
+  bandGrad.addColorStop(1, '#885500');
+
+  c.fillStyle = bandGrad;
+  c.fill();
+
+  c.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  c.fillRect(-bandW / 2, -r, 1.5, r * 2);
+  c.fillRect(-r, -bandW / 2, r * 2, 1.5);
+
+  c.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  c.fillRect(bandW / 2 - 1.5, -r, 1.5, r * 2);
+  c.fillRect(-r, bandW / 2 - 1.5, r * 2, 1.5);
+
+  c.restore();
+
+  let coreR = bandW * 0.38;
+  c.save();
+  c.beginPath();
+  c.arc(0, 0, coreR, 0, Math.PI * 2);
+
+  let coreGrad = c.createRadialGradient(-coreR * 0.3, -coreR * 0.3, coreR * 0.05, 0, 0, coreR);
+  coreGrad.addColorStop(0, '#ffffff');
+  coreGrad.addColorStop(0.4, '#ffdd00');
+  coreGrad.addColorStop(0.8, '#ff5500');
+  coreGrad.addColorStop(1, '#441100');
+
+  c.fillStyle = coreGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+  c.lineWidth = 1;
+  c.stroke();
+
+  c.fillStyle = '#ffffff';
+  c.beginPath();
+  c.arc(-coreR * 0.3, -coreR * 0.3, coreR * 0.25, 0, Math.PI * 2);
+  c.fill();
+  c.restore();
+
+  c.restore();
+}
+
+// ★ ネイラ（NEIRA）スクエア＋正12角形二重リング＆青色系発光コア描画
+function drawPolygonPath(c, r, sides) {
+  c.beginPath();
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2 / sides) - Math.PI / 2;
+    let x = Math.cos(a) * r;
+    let y = Math.sin(a) * r;
+    if (i === 0) c.moveTo(x, y);
+    else c.lineTo(x, y);
+  }
+  c.closePath();
+}
+
+function draw2D3DStyleNeira(c, w, h, baseColor, rotYAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  c.rotate(rotYAnim || 0);
+
+  let r = w * 0.42;
+  let mainColor = baseColor || '#00ffcc';
+
+  c.save();
+  let sqSize = r * 0.95;
+  c.shadowBlur = 12;
+  c.shadowColor = mainColor;
+
+  let sqGrad = c.createLinearGradient(-sqSize, -sqSize, sqSize, sqSize);
+  sqGrad.addColorStop(0, '#ffffff');
+  sqGrad.addColorStop(0.3, mainColor);
+  sqGrad.addColorStop(0.85, '#0055aa');
+  sqGrad.addColorStop(1, '#001133');
+
+  c.fillStyle = sqGrad;
+  c.fillRect(-sqSize, -sqSize, sqSize * 2, sqSize * 2);
+  c.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+  c.lineWidth = 1.2;
+  c.strokeRect(-sqSize, -sqSize, sqSize * 2, sqSize * 2);
+  c.restore();
+
+  let r12Outer = r * 0.82;
+  c.save();
+  drawPolygonPath(c, r12Outer, 12);
+
+  let outerGrad = c.createRadialGradient(-r12Outer * 0.3, -r12Outer * 0.3, r12Outer * 0.1, 0, 0, r12Outer);
+  outerGrad.addColorStop(0, '#ffffff');
+  outerGrad.addColorStop(0.4, '#00ccff');
+  outerGrad.addColorStop(1, '#002266');
+
+  c.fillStyle = outerGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+  c.lineWidth = 1;
+  c.stroke();
+  c.restore();
+
+  let r12Inner = r * 0.58;
+  c.save();
+  drawPolygonPath(c, r12Inner, 12);
+
+  let innerGrad = c.createRadialGradient(0, 0, r12Inner * 0.1, 0, 0, r12Inner);
+  innerGrad.addColorStop(0, '#001122');
+  innerGrad.addColorStop(0.7, '#003366');
+  innerGrad.addColorStop(1, '#0088ff');
+
+  c.fillStyle = innerGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(0, 255, 255, 0.9)';
+  c.lineWidth = 1;
+  c.stroke();
+  c.restore();
+
+  c.save();
+  let slotW = r * 0.22;
+  let slotL = r * 0.28;
+  c.fillStyle = '#002244';
+  c.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  c.lineWidth = 1;
+
+  for (let i = 0; i < 4; i++) {
+    c.save();
+    c.rotate(i * Math.PI / 2);
+    c.fillRect(-slotW / 2, -r12Inner + r * 0.05, slotW, slotL);
+    c.strokeRect(-slotW / 2, -r12Inner + r * 0.05, slotW, slotL);
+
+    c.fillStyle = '#00ffff';
+    c.fillRect(-slotW * 0.3, -r12Inner + r * 0.1, slotW * 0.6, r * 0.04);
+    c.restore();
+  }
+  c.restore();
+
+  let coreR = r * 0.22;
+  c.save();
+  c.beginPath();
+  c.arc(0, 0, coreR, 0, Math.PI * 2);
+
+  let coreGrad = c.createRadialGradient(-coreR * 0.3, -coreR * 0.3, coreR * 0.05, 0, 0, coreR);
+  coreGrad.addColorStop(0, '#ffffff');
+  coreGrad.addColorStop(0.3, '#88ffff');
+  coreGrad.addColorStop(0.75, '#0066ff');
+  coreGrad.addColorStop(1, '#001144');
+
+  c.shadowBlur = 12;
+  c.shadowColor = '#00ffff';
+
+  c.fillStyle = coreGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+  c.lineWidth = 1;
+  c.stroke();
+
+  c.shadowBlur = 0;
+  c.fillStyle = '#ffffff';
+  c.beginPath();
+  c.arc(-coreR * 0.3, -coreR * 0.3, coreR * 0.25, 0, Math.PI * 2);
+  c.fill();
+  c.restore();
+
+  c.restore();
+}
 const ENEMY_PATTERNS_DATA = {
   "RIVA": {
     "color": "#3399ff", "hp": 1, "score": 200,
@@ -203,7 +1101,7 @@ const ENEMY_TYPES = {
   'RIVA': { color: '#ffff00', shape: 'crescent', hp: 1, score: 200 },
   'NEIRA': { color: '#ff00ff', shape: 'saucer', hp: 1, score: 500 },
   'ETTORI': { color: '#aaaaaa', shape: 'arrow', hp: 1, score: 100 },
-  'QUIRI': { color: '#ffffff', shape: 'star', hp: 1, score: 100 },
+  'QUIRI': { color: '#ff3333', shape: 'star', hp: 1, score: 100 },
   'CALDERON': { color: '#4444ff', shape: 'heavy', hp: 3, score: 500 },
   'LOPE': { color: '#ff88cc', shape: 'arrow', hp: 1, score: 100 },
   'SPLITTA': { color: '#88ffff', shape: 'mine', hp: 2, score: 500 },
@@ -227,7 +1125,7 @@ const ENEMY_DEMO_LIST = [
   { name: 'RIVA (リーバ)', pts: '200 PTS', desc: '光子スフィア機。画面上部から突入し大きな円弧を描く。', shape: 'crescent', color: '#ffff00' },
   { name: 'NEIRA (ネイラ)', pts: '500 PTS', desc: '新式戦闘機。画面中央で大きく円軌道を描く。', shape: 'saucer', color: '#ff00ff' },
   { name: 'ETTORI (エトリ)', pts: '100 PTS', desc: '旧式無人戦闘機。直角折れ移動時に一時停止する。', shape: 'arrow', color: '#aaaaaa' },
-  { name: 'QUIRI (キリ)', pts: '100 PTS', desc: '小型攻撃機。母艦から発射され一直線に突進。', shape: 'star', color: '#ffffff' },
+  { name: 'QUIRI (キリ)', pts: '100 PTS', desc: '小型攻撃機。母艦から発射され一直線に突進。', shape: 'star', color: '#ff3333' },
   { name: 'CALDERON (カルデロン)', pts: '500 PTS', desc: '捕虜護送艦。倒すとパーサーと合体できる。', shape: 'heavy', color: '#4444ff' },
   { name: 'LOPE (ロペ)', pts: '100 PTS', desc: '新型無人戦闘機。画面端で揺れながら下降。', shape: 'arrow', color: '#ff88cc' },
   { name: 'SPLITTA (スプリッタ)', pts: '500 PTS', desc: '硬度反射板機雷。撃つ度に3回まで分裂する。', shape: 'mine', color: '#88ffff' },
@@ -409,7 +1307,7 @@ function drawDetailedEnemyShape(c, sh, col, w, h) {
     drawPoly(c, [[w/2, 0], [w*0.7, h*0.3], [w/2, h*0.5]], col, 'rgba(255,255,255,0.5)');
     drawPoly(c, [[w/2, 0], [w*0.3, h*0.3], [w/2, h*0.5]], col, 'rgba(255,255,255,0.2)');
     drawPoly(c, [[w*0.7, h*0.3], [w, h*0.2], [w*0.85, h*0.8], [w/2, h*0.5]], col, 'rgba(0,0,0,0.2)');
-    drawPoly(c, [[w/2, h*0.3], [0, h*0.2], [w*0.15, h*0.8], [w/2, h*0.5]], col, 'rgba(0,0,0,0.4)');
+    drawPoly(c, [[w*0.3, h*0.3], [0, h*0.2], [w*0.15, h*0.8], [w/2, h*0.5]], col, 'rgba(0,0,0,0.4)');
     drawPoly(c, [[w/2, h*0.5], [w*0.7, h*0.8], [w/2, h], [w*0.3, h*0.8]], '#fff', 'rgba(0,0,0,0.3)');
   } else if (sh === 'arrow') {
     drawPoly(c, [[w*0.3, 0], [w/2, h*0.3], [0, h*0.6]], col, 'rgba(255,255,255,0.4)');
@@ -526,6 +1424,7 @@ class Debris {
   draw() { if (isNaN(this.x) || isNaN(this.y)) return; ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation); ctx.globalAlpha = Math.max(0, this.life / this.maxLife); ctx.fillStyle = this.color; ctx.beginPath(); ctx.moveTo(0, -this.size); ctx.lineTo(this.size, this.size); ctx.lineTo(-this.size, this.size); ctx.closePath(); ctx.fill(); ctx.restore(); }
 }
 function spawnDebris(x, y, c, ct, l) { for (let i = 0; i < ct; i++) debrisList.push(new Debris(x, y, c, l)); }
+
 // ==========================================
 // 4. ゲームエンティティ (Enemy, Larios, AreaBoss, Map, Player)
 // ==========================================
@@ -664,13 +1563,11 @@ class Enemy {
         }
       }
 
-      // ★ 画面内判定を厳密化：画面外（上・下・左右の表示領域外）からの弾の発射を完全NG化
       let isInScreen = (this.x >= 0 && this.x + this.width <= canvas.width && this.y >= 0 && this.y + this.height <= canvas.height);
 
       if (!this.isWeak && player && !isNaN(player.x) && !isNaN(player.y) && enemyBullets.length < 15 && !player.isDestroyed) {
         if (!(gameState === 'PLAYING' && areaFrames >= 3900)) {
           this.shotTimer--;
-          // 敵本体が完全に画面内に画面内にいる場合のみ撃つ
           if (this.shotTimer <= 0 && isInScreen) {
             let cx = this.x + this.width / 2, cy = this.y + this.height / 2;
             let bs = 1.0 + (effArea >= 5 ? (effArea - 4) * 0.1 : 0);
@@ -685,7 +1582,42 @@ class Enemy {
     } catch (e) { this.toRemove = true; }
   }
   
-  draw() { try { if (isNaN(this.x) || isNaN(this.y)) return; ctx.save(); ctx.translate(this.x, this.y); let c = this.def.color || '#ffffff'; ctx.shadowBlur = 15; ctx.shadowColor = c; drawDetailedEnemyShape(ctx, this.def.shape || 'delta', c, this.width, this.height); ctx.restore(); } catch (e) {} }
+  draw() { 
+    try { 
+      if (isNaN(this.x) || isNaN(this.y)) return; 
+      ctx.save(); 
+      ctx.translate(this.x, this.y); 
+      let c = this.def.color || '#ffffff'; 
+      ctx.shadowBlur = 15; 
+      ctx.shadowColor = c; 
+      
+      // ★ GALLI, TITTA, ZOFF, FAILLAR, MEEUWS, OBSESS, RIVA, NEIRA, ETTORI, QUIRI の専用描画分岐
+      if (this.type === 'GALLI') {
+        draw3DGalli(ctx, this.width, this.height, c, -this.lifeTime * 0.05);
+      } else if (this.type === 'TITTA') {
+        draw2D3DStyleTitta(ctx, this.width, this.height, c, -this.lifeTime * 0.05);
+      } else if (this.type === 'ZOFF') {
+        draw2D3DStyleZoff(ctx, this.width, this.height, c);
+      } else if (this.type === 'FAILLAR') {
+        draw2D3DStyleFaillar(ctx, this.width, this.height, c);
+      } else if (this.type === 'MEEUWS') {
+        draw2D3DStyleMeeuws(ctx, this.width, this.height, c);
+      } else if (this.type === 'OBSESS') {
+        draw2D3DStyleObsess(ctx, this.width, this.height, c, -this.lifeTime * 0.05);
+      } else if (this.type === 'RIVA') {
+        draw2D3DStyleRiva(ctx, this.width, this.height, '#ffff00', -this.lifeTime * 0.05);
+      } else if (this.type === 'NEIRA') {
+        draw2D3DStyleNeira(ctx, this.width, this.height, '#00ffcc', -this.lifeTime * 0.05);
+      } else if (this.type === 'ETTORI') {
+        draw3DEttori(ctx, this.width, this.height, c, -this.lifeTime * 0.05);
+      } else if (this.type === 'QUIRI') {
+        draw3DQuiri(ctx, this.width, this.height, '#ff3333', this.lifeTime * 0.04);
+      } else {
+        drawDetailedEnemyShape(ctx, this.def.shape || 'delta', c, this.width, this.height); 
+      }
+      ctx.restore(); 
+    } catch (e) {} 
+  }
 }
 
 class Larios {
@@ -1230,6 +2162,47 @@ function checkCollisions() {
 
 function drawDemoEnemyGraphic(sh, c, x, y) {
   ctx.save(); ctx.translate(x, y); ctx.shadowBlur = 20; ctx.shadowColor = c;
+  if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('GALLI')) {
+    draw3DGalli(ctx, 50, 50, c, -gameFrames * 0.04);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('TITTA')) {
+    draw2D3DStyleTitta(ctx, 50, 50, c, -gameFrames * 0.04);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('ZOFF')) {
+    draw2D3DStyleZoff(ctx, 50, 50, c);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('FAILLAR')) {
+    draw2D3DStyleFaillar(ctx, 50, 50, c);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('MEEUWS')) {
+    draw2D3DStyleMeeuws(ctx, 50, 50, c);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('OBSESS')) {
+    draw2D3DStyleObsess(ctx, 50, 50, c, -gameFrames * 0.04);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('RIVA')) {
+    draw2D3DStyleRiva(ctx, 50, 50, '#ffff00', -gameFrames * 0.04);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('NEIRA')) {
+    draw2D3DStyleNeira(ctx, 50, 50, '#00ffcc', -gameFrames * 0.04);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('ETTORI')) {
+    draw3DEttori(ctx, 50, 50, c, -gameFrames * 0.04);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('QUIRI')) {
+    draw3DQuiri(ctx, 50, 50, '#ff3333', gameFrames * 0.04);
+    ctx.restore();
+    return;
+  }
   const customShapes = ['larios', 'boss', 'bigorra', 'target_T', 'radar_demo', 'secret_S', 'jimda', 'bonus_B', 'bonus_b', 'hidden'];
   if (customShapes.includes(sh)) {
     ctx.translate(25, 25);
@@ -1415,16 +2388,16 @@ function gameLoop() {
       ctx.fillStyle = "rgba(255, 255, 255, 0.8)"; ctx.fillRect(canvas.width - 48, canvas.height - 50, 6, 20); ctx.fillRect(canvas.width - 36, canvas.height - 50, 6, 20);
     }
 
-    // ★ 1UP（50万点＆200万点毎）右から中央にスライドイン ➔ 2秒間中央で停止 ➔ 左へスライドアウトのアニメーション
+    // 1UPスライドアニメーション表示
     if (extendAnimState !== 'OFF') {
       if (!isPaused) {
         let centerX = canvas.width / 2;
         if (extendAnimState === 'IN') {
-          extendTextX -= 12; // スライドインスピード
+          extendTextX -= 12;
           if (extendTextX <= centerX) {
             extendTextX = centerX;
             extendAnimState = 'HOLD';
-            extendAnimFrame = 120; // 中央で2秒間（120フレーム）停止
+            extendAnimFrame = 120;
           }
         } else if (extendAnimState === 'HOLD') {
           extendAnimFrame--;
@@ -1432,7 +2405,7 @@ function gameLoop() {
             extendAnimState = 'OUT';
           }
         } else if (extendAnimState === 'OUT') {
-          extendTextX -= 12; // スライドアウト（左へ捌けていく）スピード
+          extendTextX -= 12;
           if (extendTextX < -100) {
             extendAnimState = 'OFF';
           }
