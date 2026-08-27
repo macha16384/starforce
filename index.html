@@ -101,7 +101,7 @@ function draw3DGalli(c, w, h, baseColor, rotYAnim) {
     let v0 = pts[0], v1 = pts[1], v2 = pts[2];
     let nx = (v1.y - v0.y) * (v2.z - v0.z) - (v1.z - v0.z) * (v2.y - v0.y);
     let ny = (v1.z - v0.z) * (v2.x - v0.x) - (v1.x - v0.x) * (v2.z - v0.z);
-    let nz = (v1.x - v0.x) * (v2.y - v0.y) - (v1.y - v0.y) * (v2.z - v0.z);
+    let nz = (v1.x - v0.x) * (v2.y - v0.y) - (v1.y - v0.y) * (v2.x - v0.x);
     return { pts, color: f.c, z: avgZ, isFront: nz > 0 };
   });
 
@@ -117,12 +117,20 @@ function draw3DGalli(c, w, h, baseColor, rotYAnim) {
   c.restore();
 }
 
-// ★ エトリ（ETTORI）紫系 3Dポリゴンデータ ＆ 描画関数
-function createFlatEttoriMesh() {
+// ★ エトリ（ETTORI）3Dデータ ＆ 描画関数
+function createLightEttori3DMesh() {
   let vertices = [];
   let faces = [];
-  const sides = 8, rFlat = 5, rMid = 12, rInner = 9;
-  const yTop = -12, yUpperMid = -4, yLowerMid = 4, yBot = 12;
+
+  const sides = 8;
+  const rFlat = 5;
+  const rMid = 13;
+  const rInner = 9;
+
+  const yTop = -14;
+  const yUpperMid = -5;
+  const yLowerMid = 5;
+  const yBot = 14;
 
   for (let i = 0; i < sides; i++) {
     let a = (i * Math.PI * 2) / sides;
@@ -150,24 +158,30 @@ function createFlatEttoriMesh() {
   }
 
   faces.push({ v: [0, 1, 2, 3, 4, 5, 6, 7], c: '#f0d0ff' });
+
   for (let i = 0; i < sides; i++) {
-    let t1 = i, t2 = (i + 1) % sides, m1 = i + 8, m2 = (i + 1) % sides + 8;
+    let t1 = i, t2 = (i + 1) % sides;
+    let m1 = i + 8, m2 = (i + 1) % sides + 8;
     faces.push({ v: [t1, m1, m2, t2], c: (i % 2 === 0) ? '#d880ff' : '#a040e0' });
   }
   for (let i = 0; i < sides; i++) {
-    let m1 = i + 8, m2 = (i + 1) % sides + 8, in1 = i + 16, in2 = (i + 1) % sides + 16;
+    let m1 = i + 8, m2 = (i + 1) % sides + 8;
+    let in1 = i + 16, in2 = (i + 1) % sides + 16;
     faces.push({ v: [m1, in1, in2, m2], c: (i % 2 === 0) ? '#7722aa' : '#551188' });
   }
   for (let i = 0; i < sides; i++) {
-    let in1 = i + 16, in2 = (i + 1) % sides + 16, in3 = (i + 1) % sides + 24, in4 = i + 24;
+    let in1 = i + 16, in2 = (i + 1) % sides + 16;
+    let in3 = (i + 1) % sides + 24, in4 = i + 24;
     faces.push({ v: [in1, in4, in3, in2], c: (i % 2 === 0) ? '#220033' : '#330055' });
   }
   for (let i = 0; i < sides; i++) {
-    let in4 = i + 24, in3 = (i + 1) % sides + 24, lm1 = i + 32, lm2 = (i + 1) % sides + 32;
+    let in4 = i + 24, in3 = (i + 1) % sides + 24;
+    let lm1 = i + 32, lm2 = (i + 1) % sides + 32;
     faces.push({ v: [in4, lm1, lm2, in3], c: (i % 2 === 0) ? '#551188' : '#330066' });
   }
   for (let i = 0; i < sides; i++) {
-    let lm1 = i + 32, lm2 = (i + 1) % sides + 32, b1 = i + 40, b2 = (i + 1) % sides + 40;
+    let lm1 = i + 32, lm2 = (i + 1) % sides + 32;
+    let b1 = i + 40, b2 = (i + 1) % sides + 40;
     faces.push({ v: [lm1, b1, b2, lm2], c: (i % 2 === 0) ? '#8833bb' : '#662299' });
   }
   faces.push({ v: [47, 46, 45, 44, 43, 42, 41, 40], c: '#330044' });
@@ -175,80 +189,432 @@ function createFlatEttoriMesh() {
   return { vertices, faces };
 }
 
-const ETTORI_3D_MESH = createFlatEttoriMesh();
+const ETTORI_3D_MESH = createLightEttori3DMesh();
 
-function draw3DEttori(c, w, h, baseColor, rotYAnim) {
+function draw3DEttori(c, w, h, baseColor, rotZAnim) {
   c.save();
   c.translate(w / 2, h / 2);
   let scale = w / 28.0;
-  let cameraDist = 350;
-  let rotX = 0;
-  let rotY = rotYAnim || 0;
+  let rotZ = rotZAnim || 0;
 
-  let cosY = Math.cos(rotY), sinY = Math.sin(rotY);
-  let cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+  let cosZ = Math.cos(rotZ);
+  let sinZ = Math.sin(rotZ);
 
   let transformed = ETTORI_3D_MESH.vertices.map(v => {
-    let x1 = v.x * cosY + v.z * sinY;
-    let z1 = -v.x * sinY + v.z * cosY;
-    let y2 = v.y * cosX - z1 * sinX;
-    let z2 = v.y * sinX + z1 * cosX;
-    let perspective = cameraDist / (cameraDist + z2 + 100);
-    return { x: x1 * scale * perspective, y: y2 * scale * perspective, z: z2 };
+    let rx = v.x * cosZ - v.y * sinZ;
+    let ry = v.x * sinZ + v.y * cosZ;
+    return { x: rx * scale, y: ry * scale, z: v.z };
   });
 
-  let renderFaces = ETTORI_3D_MESH.faces.map(f => {
+  let renderFaces = [];
+  for (let f of ETTORI_3D_MESH.faces) {
     let pts = f.v.map(idx => transformed[idx]);
-    let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length;
     let v0 = pts[0], v1 = pts[1], v2 = pts[2];
-    let nx = (v1.y - v0.y) * (v2.z - v0.z) - (v1.z - v0.z) * (v2.y - v0.y);
-    let ny = (v1.z - v0.z) * (v2.x - v0.x) - (v1.x - v0.x) * (v2.z - v0.z);
-    let nz = (v1.x - v0.x) * (v2.y - v0.y) - (v1.y - v0.y) * (v2.x - v0.x);
-    return { pts, color: f.c, z: avgZ, isFront: nz >= 0 };
-  });
+    let crossZ = (v1.x - v0.x) * (v2.y - v0.y) - (v1.y - v0.y) * (v2.x - v0.x);
 
-  renderFaces.sort((a, b) => b.z - a.z);
+    if (crossZ >= 0) {
+      let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length;
+      renderFaces.push({ pts, color: f.c, z: avgZ });
+    }
+  }
+
+  renderFaces.sort((a, b) => a.z - b.z);
 
   renderFaces.forEach(f => {
-    if (!f.isFront) return;
-    c.beginPath(); c.moveTo(f.pts[0].x, f.pts[0].y);
+    c.beginPath();
+    c.moveTo(f.pts[0].x, f.pts[0].y);
     for (let i = 1; i < f.pts.length; i++) c.lineTo(f.pts[i].x, f.pts[i].y);
-    c.closePath(); c.fillStyle = f.color; c.fill();
-    c.strokeStyle = "rgba(255, 200, 255, 0.4)"; c.lineWidth = 0.8; c.stroke();
+    c.closePath();
+    c.fillStyle = f.color;
+    c.fill();
+    c.strokeStyle = "rgba(255, 200, 255, 0.4)";
+    c.lineWidth = 0.8;
+    c.stroke();
   });
   c.restore();
 }
 
-// ★ 赤系 B-2ステルス全翼機スタイル キリ (QUIRI) 完全3Dポリゴンデータ ＆ 描画関数
+// ★ ロペ（LOPE）3D正12角形立体コア ＆ 正12角形リングデータ ＆ 描画関数
+function create3DLopeCoreAndRingMesh() {
+  let vertices = [];
+  let faces = [];
+
+  const sides = 12;
+
+  const rCoreTop = 3.8;
+  const rCoreMid = 7.8;
+  const rCoreBase = 8.5;
+
+  const zCoreTop = 5.5;
+  const zCoreMid = 3.0;
+  const zCoreBase = 1.0;
+
+  let cStart = vertices.length;
+
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides - Math.PI / 2;
+    vertices.push({ x: Math.cos(a) * rCoreTop, y: Math.sin(a) * rCoreTop, z: zCoreTop });
+  }
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides - Math.PI / 2;
+    vertices.push({ x: Math.cos(a) * rCoreMid, y: Math.sin(a) * rCoreMid, z: zCoreMid });
+  }
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides - Math.PI / 2;
+    vertices.push({ x: Math.cos(a) * rCoreBase, y: Math.sin(a) * rCoreBase, z: zCoreBase });
+  }
+
+  let coreTopV = [];
+  for (let i = 0; i < sides; i++) coreTopV.push(cStart + i);
+  faces.push({ v: coreTopV, color: '#ffea80', stroke: '#ffffff', layer: 0 });
+
+  for (let i = 0; i < sides; i++) {
+    let t1 = cStart + i;
+    let t2 = cStart + ((i + 1) % sides);
+    let m1 = cStart + sides + i;
+    let m2 = cStart + sides + ((i + 1) % sides);
+    let c = (i % 2 === 0) ? '#ffaa00' : '#ff8800';
+    faces.push({ v: [t1, t2, m2, m1], color: c, stroke: '#ffd580', layer: 0 });
+  }
+
+  for (let i = 0; i < sides; i++) {
+    let m1 = cStart + sides + i;
+    let m2 = cStart + sides + ((i + 1) % sides);
+    let b1 = cStart + sides * 2 + i;
+    let b2 = cStart + sides * 2 + ((i + 1) % sides);
+    let c = (i % 2 === 0) ? '#e67700' : '#cc5500';
+    faces.push({ v: [m1, m2, b2, b1], color: c, stroke: '#ffaa00', layer: 0 });
+  }
+
+  const rRingIn = 10.2;
+  const rRingOut = 16.5;
+  const zRingTop = 2.5;
+  const zRingBase = 0.0;
+
+  let rStart = vertices.length;
+
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides - Math.PI / 2;
+    vertices.push({ x: Math.cos(a) * rRingIn, y: Math.sin(a) * rRingIn, z: zRingTop });
+  }
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides - Math.PI / 2;
+    vertices.push({ x: Math.cos(a) * rRingOut, y: Math.sin(a) * rRingOut, z: zRingBase });
+  }
+
+  for (let i = 0; i < sides; i++) {
+    let in1 = rStart + i;
+    let in2 = rStart + ((i + 1) % sides);
+    let out1 = rStart + sides + i;
+    let out2 = rStart + sides + ((i + 1) % sides);
+    let isAlt = i % 2 === 0;
+    let c = isAlt ? '#00aaff' : '#0066cc';
+    faces.push({ v: [in1, in2, out2, out1], color: c, stroke: '#80d4ff', layer: 1 });
+  }
+
+  return { vertices, faces };
+}
+
+const LOPE_3D_MESH = create3DLopeCoreAndRingMesh();
+
+function draw3DLope(c, w, h, baseColor, rotZAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let scale = w / 28.0;
+  let rotZ = rotZAnim || 0;
+
+  let cosZ = Math.cos(rotZ);
+  let sinZ = Math.sin(rotZ);
+
+  let transformed = LOPE_3D_MESH.vertices.map(v => {
+    let rx = v.x * cosZ - v.y * sinZ;
+    let ry = v.x * sinZ + v.y * cosZ;
+    return { x: rx * scale, y: ry * scale, z: v.z };
+  });
+
+  let renderFaces = LOPE_3D_MESH.faces.map(f => {
+    let pts = f.v.map(idx => transformed[idx]);
+    let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length;
+    return { pts, color: f.color, stroke: f.stroke, z: avgZ };
+  });
+
+  renderFaces.sort((a, b) => a.z - b.z);
+
+  renderFaces.forEach(f => {
+    c.beginPath();
+    c.moveTo(f.pts[0].x, f.pts[0].y);
+    for (let i = 1; i < f.pts.length; i++) c.lineTo(f.pts[i].x, f.pts[i].y);
+    c.closePath();
+    c.fillStyle = f.color;
+    c.fill();
+    if (f.stroke) {
+      c.strokeStyle = f.stroke;
+      c.lineWidth = 0.8;
+      c.stroke();
+    }
+  });
+  c.restore();
+}
+
+// ★ パタータ（PATARTA）底面水平 3Dデータ ＆ 描画関数
+function createHorizontalPatartaMesh() {
+  let vertices = [];
+  let faces = [];
+
+  const zFront = 4.0;
+
+  function addV(x, y, z) {
+    vertices.push({ x, y, z });
+    return vertices.length - 1;
+  }
+
+  const outerX = 18.0;
+  const innerX = 5.5;
+
+  let vLT_out = addV(-outerX, -18, zFront);
+  let vLT_in  = addV(-innerX, -18, zFront);
+  let vRT_in  = addV( innerX, -18, zFront);
+  let vRT_out = addV( outerX, -18, zFront);
+
+  const slitBottomY = 2.0;
+
+  let vLM_out = addV(-outerX, slitBottomY, zFront);
+  let vLM_in  = addV(-innerX, slitBottomY, zFront);
+  let vRM_in  = addV( innerX, slitBottomY, zFront);
+  let vRM_out = addV( outerX, slitBottomY, zFront);
+
+  const bottomSegs = 8;
+  let bOutIdx = [];
+  for (let i = 0; i <= bottomSegs; i++) {
+    let angle = (i / bottomSegs) * Math.PI;
+    let cosA = -Math.cos(angle);
+    let sinA = Math.sin(angle);
+    bOutIdx.push(addV(cosA * outerX, sinA * outerX * 0.9 + slitBottomY, zFront));
+  }
+
+  faces.push({ v: [vLT_out, vLT_in, vLM_in, vLM_out], color: '#d9f580', stroke: '#ffffff', zOffset: 0 });
+  faces.push({ v: [vRT_in, vRT_out, vRM_out, vRM_in], color: '#d9f580', stroke: '#ffffff', zOffset: 0 });
+
+  for (let i = 0; i < bottomSegs; i++) {
+    let o1 = bOutIdx[i], o2 = bOutIdx[i+1];
+    let c = (i % 2 === 0) ? '#ccff33' : '#b8e62e';
+    faces.push({ v: [o1, o2, vRM_in, vLM_in], color: c, stroke: '#ffffff', zOffset: 0 });
+  }
+
+  let vL_d1 = addV(-16, -14, zFront + 1.2);
+  let vL_d2 = addV(-innerX - 1.5, -14, zFront + 1.2);
+  let vL_d3 = addV(-innerX - 1.5,  -2, zFront + 1.2);
+  let vL_d4 = addV(-16,  -2, zFront + 1.2);
+  faces.push({ v: [vL_d1, vL_d2, vL_d3, vL_d4], color: '#99cc00', stroke: '#ffffff', zOffset: 2 });
+
+  let vR_d1 = addV( innerX + 1.5, -14, zFront + 1.2);
+  let vR_d2 = addV( 16, -14, zFront + 1.2);
+  let vR_d3 = addV( 16,  -2, zFront + 1.2);
+  let vR_d4 = addV( innerX + 1.5,  -2, zFront + 1.2);
+  faces.push({ v: [vR_d1, vR_d2, vR_d3, vR_d4], color: '#99cc00', stroke: '#ffffff', zOffset: 2 });
+
+  const zCore = zFront + 2.0;
+
+  let vP1 = addV(-innerX, slitBottomY, zCore);
+  let vP2 = addV( innerX, slitBottomY, zCore);
+  let vP3 = addV( innerX, slitBottomY + 7.0, zCore);
+  let vP4 = addV(-innerX, slitBottomY + 7.0, zCore);
+
+  faces.push({ v: [vP1, vP2, vP3, vP4], color: '#ffffff', stroke: '#99ff33', zOffset: 4 });
+
+  let vPB1 = addV(-innerX, slitBottomY, zFront + 0.5);
+  let vPB2 = addV( innerX, slitBottomY, zFront + 0.5);
+  faces.push({ v: [vP1, vP2, vPB2, vPB1], color: '#77aa00', stroke: '#b8e62e', zOffset: 3 });
+
+  let vGun1 = addV(-2.2, slitBottomY + 2.0, zCore + 0.3);
+  let vGun2 = addV( 2.2, slitBottomY + 2.0, zCore + 0.3);
+  let vGun3 = addV( 2.2, slitBottomY + 5.5, zCore + 0.3);
+  let vGun4 = addV(-2.2, slitBottomY + 5.5, zCore + 0.3);
+  faces.push({ v: [vGun1, vGun2, vGun3, vGun4], color: '#1a2b00', stroke: '#99ff33', zOffset: 5 });
+
+  return { vertices, faces };
+}
+
+const PATARTA_3D_MESH = createHorizontalPatartaMesh();
+
+function draw3DPatarta(c, w, h, baseColor) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let scale = w / 36.0;
+
+  let transformed = PATARTA_3D_MESH.vertices.map(v => {
+    return { x: v.x * scale, y: v.y * scale, z: v.z };
+  });
+
+  let renderFaces = PATARTA_3D_MESH.faces.map(f => {
+    let pts = f.v.map(idx => transformed[idx]);
+    let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length + (f.zOffset || 0);
+    return { pts, color: f.color, stroke: f.stroke, z: avgZ };
+  });
+
+  renderFaces.sort((a, b) => a.z - b.z);
+
+  renderFaces.forEach(f => {
+    c.beginPath();
+    c.moveTo(f.pts[0].x, f.pts[0].y);
+    for (let i = 1; i < f.pts.length; i++) c.lineTo(f.pts[i].x, f.pts[i].y);
+    c.closePath();
+    c.fillStyle = f.color;
+    c.fill();
+    if (f.stroke) {
+      c.strokeStyle = f.stroke;
+      c.lineWidth = 0.8;
+      c.stroke();
+    }
+  });
+  c.restore();
+}
+
+// ★ ジラール（GIRARD）超濃色パープル 3Dデータ ＆ 描画関数
+function createDarkPurpleGirardMesh() {
+  let vertices = [];
+  let faces = [];
+
+  const sides = 12;
+  const rCoreTop = 4.0;
+  const rCoreBase = 8.5;
+  const zTop = 5.0;
+  const zBase = 1.0;
+
+  let cStart = vertices.length;
+
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    vertices.push({ x: Math.cos(a) * rCoreTop, y: Math.sin(a) * rCoreTop, z: zTop });
+  }
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    vertices.push({ x: Math.cos(a) * rCoreBase, y: Math.sin(a) * rCoreBase, z: zBase });
+  }
+
+  let topV = [];
+  for (let i = 0; i < sides; i++) topV.push(cStart + i);
+  faces.push({ v: topV, color: '#aa33ff', stroke: '#ff88ff', layer: 0 });
+
+  for (let i = 0; i < sides; i++) {
+    let t1 = cStart + i;
+    let t2 = cStart + ((i + 1) % sides);
+    let b1 = cStart + sides + i;
+    let b2 = cStart + sides + ((i + 1) % sides);
+
+    let c = (i % 2 === 0) ? '#440066' : '#220033';
+    faces.push({ v: [t1, t2, b2, b1], color: c, stroke: '#9922dd', layer: 0 });
+  }
+
+  const armLenInner = 8.0;
+  const armLenOuter = 16.0;
+  const armW = 1.2;
+  const bladeL = 7.0;
+  const bladeW = 1.8;
+  const zArm = 2.5;
+
+  for (let i = 0; i < 4; i++) {
+    let baseAngle = (i * Math.PI) / 2;
+    let cosA = Math.cos(baseAngle);
+    let sinA = Math.sin(baseAngle);
+
+    let perpX = -sinA;
+    let perpY = cosA;
+
+    let aIdx = vertices.length;
+    vertices.push({ x: cosA * armLenInner - perpX * armW, y: sinA * armLenInner - perpY * armW, z: zArm });
+    vertices.push({ x: cosA * armLenInner + perpX * armW, y: sinA * armLenInner + perpY * armW, z: zArm });
+    vertices.push({ x: cosA * armLenOuter + perpX * armW, y: sinA * armLenOuter + perpY * armW, z: zArm });
+    vertices.push({ x: cosA * armLenOuter - perpX * armW, y: sinA * armLenOuter - perpY * armW, z: zArm });
+
+    faces.push({ v: [aIdx, aIdx + 1, aIdx + 2, aIdx + 3], color: '#150025', stroke: '#661199', layer: 1 });
+
+    let bIdx = vertices.length;
+    let bx = cosA * armLenOuter;
+    let by = sinA * armLenOuter;
+
+    vertices.push({ x: bx - perpX * bladeL, y: by - perpY * bladeL, z: zArm + 0.5 });
+    vertices.push({ x: bx + perpX * bladeL, y: by + perpY * bladeL, z: zArm + 0.5 });
+    vertices.push({ x: bx + cosA * bladeW + perpX * bladeL, y: by + sinA * bladeW + perpY * bladeL, z: zArm });
+    vertices.push({ x: bx + cosA * bladeW - perpX * bladeL, y: by + sinA * bladeW - perpY * bladeL, z: zArm });
+
+    faces.push({ v: [bIdx, bIdx + 1, bIdx + 2, bIdx + 3], color: '#cc00ff', stroke: '#ffaa00', layer: 2 });
+  }
+
+  return { vertices, faces };
+}
+
+const GIRARD_3D_MESH = createDarkPurpleGirardMesh();
+
+function draw3DGirard(c, w, h, baseColor, rotZAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let scale = w / 32.0;
+  let rotZ = rotZAnim || 0;
+
+  let cosZ = Math.cos(rotZ);
+  let sinZ = Math.sin(rotZ);
+
+  let transformed = GIRARD_3D_MESH.vertices.map(v => {
+    let rx = v.x * cosZ - v.y * sinZ;
+    let ry = v.x * sinZ + v.y * cosZ;
+    return { x: rx * scale, y: ry * scale, z: v.z };
+  });
+
+  let renderFaces = GIRARD_3D_MESH.faces.map(f => {
+    let pts = f.v.map(idx => transformed[idx]);
+    let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length + f.layer * 10;
+    return { pts, color: f.color, stroke: f.stroke, z: avgZ };
+  });
+
+  renderFaces.sort((a, b) => a.z - b.z);
+
+  renderFaces.forEach(f => {
+    c.beginPath();
+    c.moveTo(f.pts[0].x, f.pts[0].y);
+    for (let i = 1; i < f.pts.length; i++) c.lineTo(f.pts[i].x, f.pts[i].y);
+    c.closePath();
+    c.fillStyle = f.color;
+    c.fill();
+    if (f.stroke) {
+      c.strokeStyle = f.stroke;
+      c.lineWidth = 0.8;
+      c.stroke();
+    }
+  });
+  c.restore();
+}
+
+// ★ キリ (QUIRI) 3D描画関数
 function createRedB2StyleQuiriMesh() {
   let vertices = [];
   let faces = [];
 
   const t = 2.0;
 
-  vertices.push({ x:   0, y:  14, z:  t }); // 0
-  vertices.push({ x:   0, y:  14, z: -t }); // 1
-  vertices.push({ x: -18, y: -10, z:  t * 0.6 }); // 2
-  vertices.push({ x: -18, y: -10, z: -t * 0.6 }); // 3
-  vertices.push({ x:  -8, y:  -2, z:  t }); // 4
-  vertices.push({ x:  -8, y:  -2, z: -t }); // 5
-  vertices.push({ x:   0, y:   2, z:  t }); // 6
-  vertices.push({ x:   0, y:   2, z: -t }); // 7
-  vertices.push({ x:   8, y:  -2, z:  t }); // 8
-  vertices.push({ x:   8, y:  -2, z: -t }); // 9
-  vertices.push({ x:  18, y: -10, z:  t * 0.6 }); // 10
-  vertices.push({ x:  18, y: -10, z: -t * 0.6 }); // 11
-  vertices.push({ x:   0, y:   8, z:  t + 1.5 }); // 12
+  vertices.push({ x:   0, y:  14, z:  t });
+  vertices.push({ x:   0, y:  14, z: -t });
+  vertices.push({ x: -18, y: -10, z:  t * 0.6 });
+  vertices.push({ x: -18, y: -10, z: -t * 0.6 });
+  vertices.push({ x:  -8, y:  -2, z:  t });
+  vertices.push({ x:  -8, y:  -2, z: -t });
+  vertices.push({ x:   0, y:   2, z:  t });
+  vertices.push({ x:   0, y:   2, z: -t });
+  vertices.push({ x:   8, y:  -2, z:  t });
+  vertices.push({ x:   8, y:  -2, z: -t });
+  vertices.push({ x:  18, y: -10, z:  t * 0.6 });
+  vertices.push({ x:  18, y: -10, z: -t * 0.6 });
+  vertices.push({ x:   0, y:   8, z:  t + 1.5 });
 
-  vertices.push({ x: -12, y:  -3, z:  t + 0.15 }); // 13
-  vertices.push({ x:  -7, y:   3, z:  t + 0.15 }); // 14
-  vertices.push({ x:  -6, y:   1, z:  t + 0.15 }); // 15
-  vertices.push({ x: -11, y:  -5, z:  t + 0.15 }); // 16
+  vertices.push({ x: -12, y:  -3, z:  t + 0.15 });
+  vertices.push({ x:  -7, y:   3, z:  t + 0.15 });
+  vertices.push({ x:  -6, y:   1, z:  t + 0.15 });
+  vertices.push({ x: -11, y:  -5, z:  t + 0.15 });
 
-  vertices.push({ x:  12, y:  -3, z:  t + 0.15 }); // 17
-  vertices.push({ x:   7, y:   3, z:  t + 0.15 }); // 18
-  vertices.push({ x:   6, y:   1, z:  t + 0.15 }); // 19
-  vertices.push({ x:  11, y:  -5, z:  t + 0.15 }); // 20
+  vertices.push({ x:  12, y:  -3, z:  t + 0.15 });
+  vertices.push({ x:   7, y:   3, z:  t + 0.15 });
+  vertices.push({ x:   6, y:   1, z:  t + 0.15 });
+  vertices.push({ x:  11, y:  -5, z:  t + 0.15 });
 
   faces.push({ v: [0, 2, 4], c: '#ff3333' });
   faces.push({ v: [0, 4, 12], c: '#ff5555' });
@@ -308,9 +674,7 @@ function draw3DQuiri(c, w, h, baseColor, rotYAnim) {
   renderFaces.forEach(f => {
     c.beginPath();
     c.moveTo(f.pts[0].x, f.pts[0].y);
-    for (let i = 1; i < f.pts.length; i++) {
-      c.lineTo(f.pts[i].x, f.pts[i].y);
-    }
+    for (let i = 1; i < f.pts.length; i++) c.lineTo(f.pts[i].x, f.pts[i].y);
     c.closePath();
     c.fillStyle = f.color;
     c.fill();
@@ -321,7 +685,121 @@ function draw3DQuiri(c, w, h, baseColor, rotYAnim) {
   c.restore();
 }
 
-// ★ ティッタ（TITTA）超軽量2D+ベベル3D描画
+// ★ スプリッタ（SPLITTA）3D描画関数
+function createSplittaMesh() {
+  let vertices = [];
+  let faces = [];
+
+  const s = 16;
+  const border = 3;
+  const bIn = s - border;
+  const cs = 5;
+  const hTop = 4;
+  const hMid = 1;
+  const hBot = -4;
+
+  vertices.push({ x: -s, y: -s, z: hTop });
+  vertices.push({ x:  s, y: -s, z: hTop });
+  vertices.push({ x:  s, y:  s, z: hTop });
+  vertices.push({ x: -s, y:  s, z: hTop });
+
+  vertices.push({ x: -bIn, y: -bIn, z: hTop });
+  vertices.push({ x:  bIn, y: -bIn, z: hTop });
+  vertices.push({ x:  bIn, y:  bIn, z: hTop });
+  vertices.push({ x: -bIn, y:  bIn, z: hTop });
+
+  vertices.push({ x: -bIn + 1.5, y: -bIn + 1.5, z: hMid });
+  vertices.push({ x:  bIn - 1.5, y: -bIn + 1.5, z: hMid });
+  vertices.push({ x:  bIn - 1.5, y:  bIn - 1.5, z: hMid });
+  vertices.push({ x: -bIn + 1.5, y:  bIn - 1.5, z: hMid });
+
+  vertices.push({ x: -cs, y: -cs, z: 0 });
+  vertices.push({ x:  cs, y: -cs, z: 0 });
+  vertices.push({ x:  cs, y:  cs, z: 0 });
+  vertices.push({ x: -cs, y:  cs, z: 0 });
+
+  vertices.push({ x: 0, y: 0, z: hTop + 2 });
+
+  vertices.push({ x: -s, y: -s, z: hBot });
+  vertices.push({ x:  s, y: -s, z: hBot });
+  vertices.push({ x:  s, y:  s, z: hBot });
+  vertices.push({ x: -s, y:  s, z: hBot });
+
+  faces.push({ v: [12, 13, 14, 15], c: '#00aaff', stroke: '#88ffff' });
+  faces.push({ v: [8, 9, 13, 12], c: '#0033aa', stroke: 'none' });
+  faces.push({ v: [9, 10, 14, 13], c: '#002288', stroke: 'none' });
+  faces.push({ v: [10, 11, 15, 14], c: '#001155', stroke: 'none' });
+  faces.push({ v: [11, 8, 12, 15], c: '#0033aa', stroke: 'none' });
+
+  faces.push({ v: [4, 5, 9, 8], c: '#aa5500', stroke: 'none' });
+  faces.push({ v: [5, 6, 10, 9], c: '#884400', stroke: 'none' });
+  faces.push({ v: [6, 7, 11, 10], c: '#663300', stroke: 'none' });
+  faces.push({ v: [7, 4, 8, 11], c: '#aa5500', stroke: 'none' });
+
+  faces.push({ v: [0, 1, 5, 4], c: '#ffaa00', stroke: '#ffaa00' });
+  faces.push({ v: [1, 2, 6, 5], c: '#dd8800', stroke: '#dd8800' });
+  faces.push({ v: [2, 3, 7, 6], c: '#bb6600', stroke: '#bb6600' });
+  faces.push({ v: [3, 0, 4, 7], c: '#ffaa00', stroke: '#ffaa00' });
+
+  faces.push({ v: [0, 4, 16], c: '#ffcc00', stroke: '#ffee66' });
+  faces.push({ v: [1, 5, 16], c: '#ffaa00', stroke: '#ffee66' });
+  faces.push({ v: [2, 6, 16], c: '#dd8800', stroke: '#ffcc44' });
+  faces.push({ v: [3, 7, 16], c: '#ffaa00', stroke: '#ffee66' });
+
+  faces.push({ v: [0, 17, 18, 1], c: '#ff8800', stroke: 'none' });
+  faces.push({ v: [1, 18, 19, 2], c: '#cc6600', stroke: 'none' });
+  faces.push({ v: [2, 19, 20, 3], c: '#aa4400', stroke: 'none' });
+  faces.push({ v: [3, 20, 17, 0], c: '#dd7700', stroke: 'none' });
+
+  return { vertices, faces };
+}
+
+const SPLITTA_3D_MESH = createSplittaMesh();
+
+function draw3DSplitta(c, w, h, baseColor, rotZAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let scale = w / 32.0;
+  let rotZ = rotZAnim || 0;
+
+  let cosZ = Math.cos(rotZ);
+  let sinZ = Math.sin(rotZ);
+
+  let transformed = SPLITTA_3D_MESH.vertices.map(v => {
+    let rx = v.x * cosZ - v.y * sinZ;
+    let ry = v.x * sinZ + v.y * cosZ;
+    return { x: rx * scale, y: ry * scale, z: v.z };
+  });
+
+  let renderFaces = SPLITTA_3D_MESH.faces.map(f => {
+    let pts = f.v.map(idx => transformed[idx]);
+    let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length;
+    return { pts, color: f.c, stroke: f.stroke, z: avgZ };
+  });
+
+  renderFaces.sort((a, b) => a.z - b.z);
+
+  renderFaces.forEach(f => {
+    c.beginPath();
+    c.moveTo(f.pts[0].x, f.pts[0].y);
+    for (let i = 1; i < f.pts.length; i++) c.lineTo(f.pts[i].x, f.pts[i].y);
+    c.closePath();
+    c.fillStyle = f.color;
+    c.fill();
+    if (f.stroke && f.stroke !== 'none') {
+      c.strokeStyle = f.stroke;
+      c.lineWidth = 1.0;
+      c.stroke();
+    } else {
+      c.strokeStyle = "rgba(0, 0, 0, 0.3)";
+      c.lineWidth = 0.5;
+      c.stroke();
+    }
+  });
+  c.restore();
+}
+
+// ★ ティッタ（TITTA）超軽量描画
 function draw2D3DStyleTitta(c, w, h, baseColor, rotYAnim) {
   c.save();
   c.translate(w / 2, h / 2);
@@ -403,7 +881,7 @@ function draw2D3DStyleTitta(c, w, h, baseColor, rotYAnim) {
   c.restore();
 }
 
-// ★ ゾフ（ZOFF）固定向き超軽量3D風描画
+// ★ ゾフ（ZOFF）描画
 function draw2D3DStyleZoff(c, w, h, baseColor) {
   c.save();
   c.translate(w / 2, h / 2);
@@ -466,7 +944,7 @@ function draw2D3DStyleZoff(c, w, h, baseColor) {
   c.restore();
 }
 
-// ★ フェラー（FAILLAR）固定向き超軽量3D風描画
+// ★ フェラー（FAILLAR）描画
 function draw2D3DStyleFaillar(c, w, h, baseColor) {
   c.save();
   c.translate(w / 2, h / 2);
@@ -546,7 +1024,7 @@ function draw2D3DStyleFaillar(c, w, h, baseColor) {
   c.restore();
 }
 
-// ★ メーウス（MEEUWS）発光コア＆被さりアーマー超軽量3D風描画
+// ★ メーウス（MEEUWS）描画
 function draw2D3DStyleMeeuws(c, w, h, baseColor) {
   c.save();
   c.translate(w / 2, h / 2);
@@ -648,7 +1126,7 @@ function draw2D3DStyleMeeuws(c, w, h, baseColor) {
   c.restore();
 }
 
-// ★ オブセス（OBSESS）超軽量2D+ベベル3D描画
+// ★ オブセス（OBSESS）描画
 function draw2D3DStyleObsess(c, w, h, baseColor, rotYAnim) {
   c.save();
   c.translate(w / 2, h / 2);
@@ -730,7 +1208,7 @@ function draw2D3DStyleObsess(c, w, h, baseColor, rotYAnim) {
   c.restore();
 }
 
-// ★ リーバ（RIVA）多角形（八角形）アーマー＆イエロー発光コア描画
+// ★ リーバ（RIVA）描画
 function createOctagonPath(c, r) {
   c.beginPath();
   for (let i = 0; i < 8; i++) {
@@ -822,7 +1300,7 @@ function draw2D3DStyleRiva(c, w, h, baseColor, rotYAnim) {
   c.restore();
 }
 
-// ★ ネイラ（NEIRA）スクエア＋正12角形二重リング＆青色系発光コア描画
+// ★ ネイラ（NEIRA）描画
 function drawPolygonPath(c, r, sides) {
   c.beginPath();
   for (let i = 0; i < sides; i++) {
@@ -1013,21 +1491,21 @@ const ENEMY_PATTERNS_DATA = {
     "formation": { "count": 6, "layout": "dir_line", "spacing": 28, "interval": 8 }
   },
   "LOPE": {
-    "color": "#66ccff", "hp": 1, "score": 100,
+    "color": "#ffaa00", "hp": 1, "score": 100,
     "desc": "新型無人機。左右にゆらゆら揺れながら下降。",
     "category": "sine", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
     "formation": { "count": 6, "layout": "single_file", "spacing": 28, "interval": 8 }
   },
   "SPLITTA": {
-    "color": "#cc66ff", "hp": 2, "score": 500,
+    "color": "#88ffff", "hp": 2, "score": 500,
     "desc": "反射板機雷。自機へ追尾接近する。",
     "category": "dive", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
     "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "GIRARD": {
-    "color": "#ff9900", "hp": 8, "score": 1000,
+    "color": "#cc00ff", "hp": 8, "score": 1000,
     "desc": "浮遊機雷。耐久8発。大ゆれでゆっくり下降。",
     "category": "sine", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
@@ -1103,10 +1581,10 @@ const ENEMY_TYPES = {
   'ETTORI': { color: '#aaaaaa', shape: 'arrow', hp: 1, score: 100 },
   'QUIRI': { color: '#ff3333', shape: 'star', hp: 1, score: 100 },
   'CALDERON': { color: '#4444ff', shape: 'heavy', hp: 3, score: 500 },
-  'LOPE': { color: '#ff88cc', shape: 'arrow', hp: 1, score: 100 },
+  'LOPE': { color: '#ffaa00', shape: 'arrow', hp: 1, score: 100 },
   'SPLITTA': { color: '#88ffff', shape: 'mine', hp: 2, score: 500 },
-  'GIRARD': { color: '#ccff00', shape: 'mine', hp: 8, score: 1000 },
-  'PATARTA': { color: '#cc5500', shape: 'heavy', hp: 2, score: 500 },
+  'GIRARD': { color: '#cc00ff', shape: 'mine', hp: 8, score: 1000 },
+  'PATARTA': { color: '#99ff33', shape: 'patarta', hp: 2, score: 200 },
   'SULTAN': { color: '#00ffaa', shape: 'stealth', hp: 1, score: 100 },
   'GADOHA': { color: '#cccccc', shape: 'scout', hp: 1, score: 500 },
   'AMARA': { color: '#cc0000', shape: 'dagger', hp: 1, score: 100 },
@@ -1127,10 +1605,10 @@ const ENEMY_DEMO_LIST = [
   { name: 'ETTORI (エトリ)', pts: '100 PTS', desc: '旧式無人戦闘機。直角折れ移動時に一時停止する。', shape: 'arrow', color: '#aaaaaa' },
   { name: 'QUIRI (キリ)', pts: '100 PTS', desc: '小型攻撃機。母艦から発射され一直線に突進。', shape: 'star', color: '#ff3333' },
   { name: 'CALDERON (カルデロン)', pts: '500 PTS', desc: '捕虜護送艦。倒すとパーサーと合体できる。', shape: 'heavy', color: '#4444ff' },
-  { name: 'LOPE (ロペ)', pts: '100 PTS', desc: '新型無人戦闘機。画面端で揺れながら下降。', shape: 'arrow', color: '#ff88cc' },
+  { name: 'LOPE (ロペ)', pts: '100 PTS', desc: '新型無人戦闘機。画面端で揺れながら下降。', shape: 'arrow', color: '#ffaa00' },
   { name: 'SPLITTA (スプリッタ)', pts: '500 PTS', desc: '硬度反射板機雷。撃つ度に3回まで分裂する。', shape: 'mine', color: '#88ffff' },
-  { name: 'GIRARD (ジラール)', pts: '1000 PTS', desc: '浮遊機雷。耐久8発。爆発時画面全敵誘爆！', shape: 'mine', color: '#ccff00' },
-  { name: 'PATARTA (パタータ)', pts: '200 / 500 PTS', desc: '重爆撃機。中央で開砲後倒すと500点。', shape: 'heavy', color: '#cc5500' },
+  { name: 'GIRARD (ジラール)', pts: '1000 PTS', desc: '浮遊機雷。耐久8発。爆発時画面全敵誘爆！', shape: 'mine', color: '#cc00ff' },
+  { name: 'PATARTA (パタータ)', pts: '200 / 500 PTS', desc: '重爆撃機。中央で開砲後倒すと500点。', shape: 'patarta', color: '#99ff33' },
   { name: 'SULTAN (スルタン)', pts: '100 PTS', desc: '磁力戦闘機。画面端で反射しながらジグザグ移動。', shape: 'stealth', color: '#00ffaa' },
   { name: 'GADOHA (ガドーハ)', pts: '500 PTS', desc: '無人偵察機。中央で停止し大量弾幕を放射し退却。', shape: 'scout', color: '#cccccc' },
   { name: 'AMARA (アマラ)', pts: '100 PTS', desc: '高速爆撃機。自機の少し下で鋭角に反転する。', shape: 'dagger', color: '#cc0000' },
@@ -1198,7 +1676,7 @@ const ENEMY_SEQUENCE = [
 const CUSTOM_MAP_PATTERNS = {
   "PATTERN_1": {
     "areas": [1, 5, 9, 13, 17, 21],
-    "map": ["000000000000","0000S1110000","000011110000","000111111100","0001C111+110","00011B1R1110","000011T11ZZ0","S0000111S110","110001111100","111000000000","1ZZ100000000","111110000011","R11110000111","1B1C10000111","11T110001111","1111100011-1","1+1000011111","111000111ZZ1","110000111111","110000111111","10000011CB1R","1000001111T1","000000111111","000000111111","000000011111","00000001S111","00010001111+","001100000111","001110000011","001110000001","011-11000000","011111110000","011111111000","01111111S100","001CB1R11100","00011T111100","000111111100","0011ZZ1+1100","001111111100","011111111000","0111-1111000","011111110000","011111100000","011ZZ1110000","011111111000","0111R1111100","00111B1C1100","00011T111100","000011111100","000011111100","010001111000","010001111000","111000111000","1111000S0000","1-1100000000","111100000000","1R1110000000","111110000000","TB1C10000000","111111000000","111111110000","111111111000","11111-1T1100","11R111111110","1T1111111110","11B1CCB11100","1111111R1000","111111110000","11111111S000","1+1T11110000","11111-110000","111111110000","1R1111110000","11B1C1100000","111111100000","111111000000","1ZZZZZ000000","111111100000","111111111000","1R11CC111100","11B111B1R100","111111111100","11T111111000","1111+1100000","1-1110000000","111110000000","111100001100","111000011100","111000011100","1S10001R1T10","111001111110","1100011B1C10","100001111100","000011111100","000011-11100","000011111110","0001111111S0","000111111100","00111111+100","001111111100","001R11T11100","0111B1C11100","001111111110","001111111100","00011111-100","000011111110","000011111110","000001111111","00000011+T11","000000011111","000000111110","00000111R110","000011111110","0000111B1C11","000111111111","000111111110","000111111110","0001ZZZZZ100","001111111100","001111111100","011-1T111000","0111111+1100","001111111110","011111111110","S11111111110","01111B1C1110","01111R111100","011111111100","001111111100","00011+11T000","000111111000","000111111000","000011110000","000001100000","000000000000"]
+    "map": ["000000000000","0000S1110000","000011110000","000111111100","0001C111+110","00011B1R1110","000011T11ZZ0","S0000111S110","110001111100","111000000000","1ZZ100000000","111110000011","R11110000111","1B1C10000111","11T110001111","1111100011-1","1+1000011111","111000111ZZ1","110000111111","110000111111","10000011CB1R","1000001111T1","000000111111","000000111111","000000011111","00000001S111","00010001111+","001100000111","001110000011","001110000001","011-11000000","011111110000","011111111000","01111111S100","001CB1R11100","00011T111100","000111111100","0011ZZ1+1100","001111111100","011111111000","0111-1111000","011111110000","011111100000","011ZZ1110000","011111111000","0111R1111100","00111B1C1100","00011T111100","000011111100","000011111100","010001111000","010001111000","111000111000","1111000S0000","1-1100000000","111100000000","1R1110000000","111110000000","TB1C10000000","111111000000","111111110000","111111111000","11111-1T1100","11R111111110","1T1111111110","11B1CCB11100","1111111R1000","111111110000","11111111S000","1+1T11110000","11111-110000","111111110000","1R1111110000","11B1C1100000","111111100000","111111000000","1ZZZZZ000000","111111100000","111111111000","1R11CC111100","11B111B1R100","111111111100","11T111111000","1111+1100000","1-1110000000","111110000000","111100001100","111000011100","111000011100","1S10001R1T10","111001111110","1100011B1C10","100001111100","000011111100","000011-11100","000011111110","0001111111S0","000111111100","00111111+100","001111111100","001R11T11100","0111B1C11100","001111111110","001111111100","00011111-100","000011111110","000011111110","000001111111","00000011+T11","000000011111","000000111110","00000111R110","000011111110","0000111B1C11","000111111111","000111111110","000111111110","0001ZZZZZ100","001111111100","001111111100","011-1T111000","0111111+1000","001111111110","011111111110","S11111111110","01111B1C1110","01111R111100","011111111100","001111111100","00011+11T000","000111111000","000111111000","000011110000","000001100000","000000000000"]
   },
   "PATTERN_2": {
     "areas": [2, 6, 10, 14, 18, 22],
@@ -1213,7 +1691,6 @@ const CUSTOM_MAP_PATTERNS = {
     "map": ["000000000000","111111111111","111111111111","111111111111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111111111111","111111111111","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","111111111111","111111111111","11SSSSSSSS11","11SSSSSSSS11","111111111111","111111111111","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","111111111111","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","111111111111","111111111111","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","000000000000"]
   }
 };
-
 // ==========================================
 // 2. グローバル変数とユーティリティ
 // ==========================================
@@ -1436,7 +1913,7 @@ class Enemy {
     this.hp = (t === 'GIRARD') ? 8 : (this.def.hp || 1); this.score = this.def.score || 100;
     this.isWeak = o.weak || false; this.isFast = o.fast || false;
     let sh = this.def.shape;
-    this.width = (sh === 'carrier' || t === 'GUILER') ? 64 : (sh === 'heavy' ? 36 : (sh === 'star' ? 16 : 28)); this.height = this.width;
+    this.width = (sh === 'carrier' || t === 'GUILER') ? 64 : (sh === 'heavy' || t === 'PATARTA' ? 36 : (sh === 'star' ? 16 : 28)); this.height = this.width;
     
     let effArea = isLooped ? 10 : Math.min(10, areaLevel);
     let bfm = effArea >= 5 ? Math.max(0.4, 1.0 - (effArea - 4) * 0.1) : 1.0;
@@ -1591,7 +2068,7 @@ class Enemy {
       ctx.shadowBlur = 15; 
       ctx.shadowColor = c; 
       
-      // ★ GALLI, TITTA, ZOFF, FAILLAR, MEEUWS, OBSESS, RIVA, NEIRA, ETTORI, QUIRI の専用描画分岐
+      // ★ 敵キャラ3D/スタイリッシュ描画分岐 (PATARTA 3Dを新規組み込み)
       if (this.type === 'GALLI') {
         draw3DGalli(ctx, this.width, this.height, c, -this.lifeTime * 0.05);
       } else if (this.type === 'TITTA') {
@@ -1609,9 +2086,17 @@ class Enemy {
       } else if (this.type === 'NEIRA') {
         draw2D3DStyleNeira(ctx, this.width, this.height, '#00ffcc', -this.lifeTime * 0.05);
       } else if (this.type === 'ETTORI') {
-        draw3DEttori(ctx, this.width, this.height, c, -this.lifeTime * 0.05);
+        draw3DEttori(ctx, this.width, this.height, c, -this.lifeTime * 0.04);
+      } else if (this.type === 'LOPE') {
+        draw3DLope(ctx, this.width, this.height, c, -this.lifeTime * 0.04);
+      } else if (this.type === 'GIRARD') {
+        draw3DGirard(ctx, this.width, this.height, '#cc00ff', -this.lifeTime * 0.03);
       } else if (this.type === 'QUIRI') {
         draw3DQuiri(ctx, this.width, this.height, '#ff3333', this.lifeTime * 0.04);
+      } else if (this.type === 'SPLITTA') {
+        draw3DSplitta(ctx, this.width, this.height, c, -this.lifeTime * 0.03);
+      } else if (this.type === 'PATARTA') {
+        draw3DPatarta(ctx, this.width, this.height, c);
       } else {
         drawDetailedEnemyShape(ctx, this.def.shape || 'delta', c, this.width, this.height); 
       }
@@ -1793,7 +2278,7 @@ class GroundMap {
             else if (t.type === 'base') { drawBevel(ctx, 0, 0, t.width, t.height, '#1e2832'); ctx.strokeStyle = 'rgba(0,255,255,0.4)'; ctx.lineWidth = 1; ctx.strokeRect(4, 4, t.width-8, t.height-8); ctx.fillStyle = '#ffffff'; ctx.font = 'bold 18px "Segoe UI"'; ctx.textAlign = 'center'; ctx.fillText(t.char, 18, 25); }
             else if (t.type === 'bonus_B' || t.type === 'bonus_b') { drawBevel(ctx, 0, 0, t.width, t.height, '#441133'); drawPolyDome(ctx, t.width/2, t.height/2, 14, 8, '#ff00aa'); ctx.fillStyle = '#ffffff'; ctx.font = 'bold 32px "Segoe UI"'; ctx.textAlign = 'center'; ctx.fillText(t.type === 'bonus_B' ? 'B' : 'b', 18, 26); }
             else if (t.type === 'hidden' && t.revealed) { drawBevel(ctx, 0, 0, t.width, t.height, '#ffffff'); ctx.fillStyle = '#000000'; ctx.font = 'bold 36px "Segoe UI"'; ctx.textAlign = 'center'; ctx.fillText('H', 18, 30); }
-            else if (t.type === 'TARGET') { drawBevel(ctx, 0, 0, t.width, t.height, '#2a1005'); drawPolyDome(ctx, t.width/2, t.height/2, 12, 8, '#ffaa00'); ctx.fillStyle = '#ffffff'; ctx.font = 'bold 16px "Segoe UI"'; ctx.textAlign = 'center'; ctx.fillText('T', 18, 24); }
+            else if (t.type === 'TARGET') { drawBevel(ctx, 0, 0, t.width, t.height, '#2a1005'); drawPolyDome(ctx, t.width/2, t.height/2, 12, 8, '#ffaa00'); ctx.fillStyle = '#ffffff'; ctx.font = 'bold 24px "Segoe UI"'; ctx.textAlign = 'center'; ctx.fillText('T', 18, 24); }
             else if (t.type === 'radar') { drawPolyDome(ctx, 18, 18, 16, 12, '#002244'); ctx.save(); ctx.translate(18, 18); ctx.rotate(t.rotation || 0); ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-13, 0); ctx.lineTo(13, 0); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.restore(); }
             else if (t.type === 'silo') { drawBevel(ctx, 0, 0, t.width, t.height, '#110000'); ctx.fillStyle = (Math.floor(Date.now() / 100) % 2 === 0) ? '#ff0033' : '#330000'; ctx.beginPath(); ctx.arc(18, 18, 9, 0, Math.PI * 2); ctx.fill(); }
             else if (t.type === 'secret' && t.revealed) { let d = Math.max(0, 1 - (t.hp / t.maxHp)); drawBevel(ctx, 0, 0, t.width, t.height, '#332200'); ctx.fillStyle = `rgba(255,${Math.floor(200 - d * 200)},0,1)`; ctx.beginPath(); ctx.moveTo(18, 4); ctx.lineTo(32, 32); ctx.lineTo(4, 32); ctx.closePath(); ctx.fill(); }
@@ -1929,8 +2414,8 @@ function startGame() {
   gameState = 'PLAYING'; gameFrames = 0; areaFrames = 0; areaLevel = 1; score = 0;
   B_destroyed = 0; b_destroyed = 0; bonusMessage = ""; hiddenDestroyedThisArea = 0; spawnModifier = 1.0; fireModifier = 1.0; sequenceIndex = 0; isLooped = false; lariosSpawnedThisArea = false;
   
-  lives = 2; // 残機2機ストック
-  nextExtendScore = 500000; // 初回1UP：50万点
+  lives = 2;
+  nextExtendScore = 500000;
   extendAnimState = 'OFF';
   extendAnimFrame = 0;
   extendTextX = canvas.width + 100;
@@ -2198,8 +2683,24 @@ function drawDemoEnemyGraphic(sh, c, x, y) {
     draw3DEttori(ctx, 50, 50, c, -gameFrames * 0.04);
     ctx.restore();
     return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('LOPE')) {
+    draw3DLope(ctx, 50, 50, c, -gameFrames * 0.04);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('GIRARD')) {
+    draw3DGirard(ctx, 50, 50, '#cc00ff', -gameFrames * 0.03);
+    ctx.restore();
+    return;
   } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('QUIRI')) {
     draw3DQuiri(ctx, 50, 50, '#ff3333', gameFrames * 0.04);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('SPLITTA')) {
+    draw3DSplitta(ctx, 50, 50, c, -gameFrames * 0.03);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('PATARTA')) {
+    draw3DPatarta(ctx, 50, 50, c);
     ctx.restore();
     return;
   }
