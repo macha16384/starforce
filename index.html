@@ -25,7 +25,390 @@
 
 <script>
 // ==========================================
-// 1. 定数・設定データの宣言
+// 1. ユーティリティ関数 ＆ 疑似乱数クラス (最優先定義)
+// ==========================================
+class PRNG {
+  constructor(seed) {
+    this.m = 0x80000000;
+    this.a = 1103515245;
+    this.c = 12345;
+    this.state = seed ? seed : Math.floor(Math.random() * (this.m - 1));
+  }
+  nextInt() {
+    this.state = (this.a * this.state + this.c) % this.m;
+    return this.state;
+  }
+  nextFloat() {
+    return this.nextInt() / (this.m - 1);
+  }
+}
+
+function drawPoly(c, pts, fill, stroke) {
+  if (!pts || pts.length < 3) return;
+  c.save();
+  c.beginPath();
+  c.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) {
+    c.lineTo(pts[i][0], pts[i][1]);
+  }
+  c.closePath();
+  if (fill) {
+    c.fillStyle = fill;
+    c.fill();
+  }
+  if (stroke) {
+    c.strokeStyle = stroke;
+    c.lineWidth = 1;
+    c.stroke();
+  }
+  c.restore();
+}
+
+function drawPolyDome(c, x, y, radius, sides, color) {
+  c.save();
+  c.translate(x, y);
+  c.beginPath();
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    let px = Math.cos(a) * radius;
+    let py = Math.sin(a) * radius;
+    if (i === 0) c.moveTo(px, py);
+    else c.lineTo(px, py);
+  }
+  c.closePath();
+  let g = c.createRadialGradient(-radius * 0.3, -radius * 0.3, radius * 0.1, 0, 0, radius);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(0.5, color);
+  g.addColorStop(1, '#000000');
+  c.fillStyle = g;
+  c.fill();
+  c.strokeStyle = 'rgba(255,255,255,0.6)';
+  c.lineWidth = 1;
+  c.stroke();
+  c.restore();
+}
+
+function drawBevel(c, x, y, w, h, baseColor) {
+  c.save();
+  c.fillStyle = baseColor;
+  c.fillRect(x, y, w, h);
+  c.fillStyle = 'rgba(255,255,255,0.3)';
+  c.fillRect(x, y, w, 2);
+  c.fillRect(x, y, 2, h);
+  c.fillStyle = 'rgba(0,0,0,0.5)';
+  c.fillRect(x, y + h - 2, w, 2);
+  c.fillRect(x + w - 2, y, 2, h);
+  c.restore();
+}
+
+function drawDetailedEnemyShape(c, shape, color, w, h) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let r = w / 2;
+  if (shape === 'delta') {
+    drawPoly(c, [[0, -r], [r, r], [0, r * 0.5], [-r, r]], color, '#ffffff');
+  } else if (shape === 'stealth') {
+    drawPoly(c, [[0, -r], [r, 0], [0, r], [-r, 0]], color, '#ffffff');
+  } else if (shape === 'heavy') {
+    drawPoly(c, [[-r * 0.8, -r], [r * 0.8, -r], [r, r], [-r, r]], color, '#ffffff');
+  } else if (shape === 'cruiser') {
+    drawPoly(c, [[0, -r], [r * 0.6, -r * 0.2], [r, r], [0, r * 0.6], [-r, r], [-r * 0.6, -r * 0.2]], color, '#ffffff');
+  } else if (shape === 'mine') {
+    drawPolyDome(c, 0, 0, r * 0.8, 8, color);
+  } else if (shape === 'crescent') {
+    drawPoly(c, [[0, -r], [r, 0], [r * 0.5, r], [0, r * 0.3], [-r * 0.5, r], [-r, 0]], color, '#ffffff');
+  } else if (shape === 'saucer') {
+    drawPolyDome(c, 0, 0, r, 12, color);
+  } else if (shape === 'arrow') {
+    drawPoly(c, [[0, -r], [r * 0.7, r * 0.3], [r * 0.3, r], [0, r * 0.6], [-r * 0.3, r], [-r * 0.7, r * 0.3]], color, '#ffffff');
+  } else if (shape === 'star') {
+    drawPoly(c, [[0, -r], [r * 0.3, -r * 0.3], [r, 0], [r * 0.3, r * 0.3], [0, r], [-r * 0.3, r * 0.3], [-r, 0], [-r * 0.3, -r * 0.3]], color, '#ffffff');
+  } else if (shape === 'carrier') {
+    drawBevel(c, -r, -r, w, h, color);
+  } else {
+    drawPoly(c, [[0, -r], [r, r], [-r, r]], color, '#ffffff');
+  }
+  c.restore();
+}
+
+// ★ スーパーソニック（SUPER SONIC）擬似3D描画関数
+function draw2D3DStyleSuperSonic(c, w, h) {
+  c.save();
+  c.translate(w / 2, h / 2);
+
+  let rX = w * 0.32;
+  let rY = h * 0.48;
+
+  c.save();
+  c.beginPath();
+  c.moveTo(0, -rY);
+  c.bezierCurveTo(rX * 1.3, -rY * 0.4, rX * 1.3, rY * 0.4, 0, rY);
+  c.bezierCurveTo(-rX * 1.3, rY * 0.4, -rX * 1.3, -rY * 0.4, 0, -rY);
+  c.closePath();
+
+  let bodyGrad = c.createRadialGradient(-rX * 0.3, -rY * 0.3, rX * 0.1, 0, 0, rY);
+  bodyGrad.addColorStop(0, '#ffffff');
+  bodyGrad.addColorStop(0.35, '#e0e8f0');
+  bodyGrad.addColorStop(0.75, '#8a99a6');
+  bodyGrad.addColorStop(1, '#3a4550');
+
+  c.fillStyle = bodyGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+  c.lineWidth = 1.2;
+  c.stroke();
+  c.restore();
+
+  let ringR = rX * 0.65;
+  c.save();
+  c.beginPath();
+  c.arc(0, 0, ringR, 0, Math.PI * 2);
+  c.fillStyle = '#222a33';
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  c.lineWidth = 1;
+  c.stroke();
+  c.restore();
+
+  let coreR = ringR * 0.75;
+  c.save();
+  c.beginPath();
+  c.arc(0, 0, coreR, 0, Math.PI * 2);
+
+  let coreGrad = c.createRadialGradient(-coreR * 0.35, -coreR * 0.35, coreR * 0.1, 0, 0, coreR);
+  coreGrad.addColorStop(0, '#ffffff');
+  coreGrad.addColorStop(0.25, '#ffcc00');
+  coreGrad.addColorStop(0.65, '#ff5500');
+  coreGrad.addColorStop(0.9, '#aa1100');
+  coreGrad.addColorStop(1, '#440000');
+
+  c.shadowBlur = 15;
+  c.shadowColor = '#ff6600';
+
+  c.fillStyle = coreGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 220, 180, 0.9)';
+  c.lineWidth = 1;
+  c.stroke();
+
+  c.shadowBlur = 0;
+  c.fillStyle = '#ffffff';
+  c.beginPath();
+  c.arc(-coreR * 0.3, -coreR * 0.3, coreR * 0.22, 0, Math.PI * 2);
+  c.fill();
+
+  c.restore();
+  c.restore();
+}
+
+// ★ ガイラ（GUILER）擬似3D描画関数
+function draw2D3DStyleGuiler(c, w, h) {
+  c.save();
+  c.translate(w / 2, h / 2);
+
+  let r = w / 2;
+
+  c.save();
+  c.beginPath();
+  c.moveTo(-r * 0.18, -r * 0.95);
+  c.bezierCurveTo(-r * 0.6, -r * 0.95, -r * 0.95, -r * 0.4, -r * 0.95, r * 0.3);
+  c.lineTo(-r * 0.65, r * 0.95);
+  c.lineTo(-r * 0.25, r * 0.95);
+  c.lineTo(-r * 0.25, -r * 0.2);
+  c.bezierCurveTo(-r * 0.5, -r * 0.2, -r * 0.55, -r * 0.6, -r * 0.18, -r * 0.7);
+  c.closePath();
+
+  c.moveTo(r * 0.18, -r * 0.95);
+  c.bezierCurveTo(r * 0.6, -r * 0.95, r * 0.95, -r * 0.4, r * 0.95, r * 0.3);
+  c.lineTo(r * 0.65, r * 0.95);
+  c.lineTo(r * 0.25, r * 0.95);
+  c.lineTo(r * 0.25, -r * 0.2);
+  c.bezierCurveTo(r * 0.5, -r * 0.2, r * 0.55, -r * 0.6, r * 0.18, -r * 0.7);
+  c.closePath();
+
+  let shellGrad = c.createRadialGradient(0, -r * 0.2, r * 0.1, 0, 0, r);
+  shellGrad.addColorStop(0, '#ffffff');
+  shellGrad.addColorStop(0.3, '#ff33aa');
+  shellGrad.addColorStop(0.7, '#880066');
+  shellGrad.addColorStop(1, '#220022');
+
+  c.shadowBlur = 20;
+  c.shadowColor = '#ff00aa';
+  c.fillStyle = shellGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 200, 255, 0.8)';
+  c.lineWidth = 1.5;
+  c.stroke();
+  c.restore();
+
+  c.save();
+  c.fillStyle = '#0a0d14';
+  c.fillRect(-r * 0.2, -r * 0.85, r * 0.4, r * 1.75);
+  c.strokeStyle = '#ff00aa';
+  c.lineWidth = 1;
+  c.strokeRect(-r * 0.2, -r * 0.85, r * 0.4, r * 1.75);
+
+  c.fillStyle = '#ffaa00';
+  c.fillRect(-r * 0.12, -r * 0.8, r * 0.04, r * 1.6);
+  c.fillRect(r * 0.08, -r * 0.8, r * 0.04, r * 1.6);
+  c.restore();
+
+  c.save();
+  c.beginPath();
+  c.moveTo(-r * 0.45, r * 0.9);
+  c.lineTo(-r * 0.45, r * 0.2);
+  c.bezierCurveTo(-r * 0.45, -r * 0.3, r * 0.45, -r * 0.3, r * 0.45, r * 0.2);
+  c.lineTo(r * 0.45, r * 0.9);
+  c.lineTo(-r * 0.45, r * 0.9);
+  c.closePath();
+
+  let mainGrad = c.createLinearGradient(0, -r * 0.3, 0, r * 0.9);
+  mainGrad.addColorStop(0, '#ffffff');
+  mainGrad.addColorStop(0.4, '#e0e8f0');
+  mainGrad.addColorStop(0.8, '#607080');
+  mainGrad.addColorStop(1, '#202835');
+
+  c.shadowBlur = 10;
+  c.shadowColor = '#00ffff';
+  c.fillStyle = mainGrad;
+  c.fill();
+  c.strokeStyle = '#ffffff';
+  c.lineWidth = 1.2;
+  c.stroke();
+  c.restore();
+
+  c.save();
+  c.beginPath();
+  c.moveTo(0, -r * 0.65);
+  c.lineTo(r * 0.15, -r * 0.35);
+  c.lineTo(r * 0.15, r * 0.1);
+  c.lineTo(-r * 0.15, r * 0.1);
+  c.lineTo(-r * 0.15, -r * 0.35);
+  c.closePath();
+
+  let noseGrad = c.createLinearGradient(-r * 0.15, 0, r * 0.15, 0);
+  noseGrad.addColorStop(0, '#ffffff');
+  noseGrad.addColorStop(0.5, '#d0e5ff');
+  noseGrad.addColorStop(1, '#506580');
+
+  c.fillStyle = noseGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+  c.lineWidth = 1;
+  c.stroke();
+
+  c.beginPath();
+  c.arc(0, -r * 0.45, r * 0.06, 0, Math.PI * 2);
+  c.fillStyle = '#00ffff';
+  c.shadowBlur = 12;
+  c.shadowColor = '#00ffff';
+  c.fill();
+  c.restore();
+
+  c.save();
+  let panelW = r * 0.5;
+  let panelH = r * 0.55;
+  let panelY = r * 0.25;
+
+  c.fillStyle = '#151c28';
+  c.fillRect(-panelW / 2, panelY, panelW, panelH);
+  c.strokeStyle = 'rgba(0, 255, 255, 0.6)';
+  c.lineWidth = 1;
+  c.strokeRect(-panelW / 2, panelY, panelW, panelH);
+
+  c.fillStyle = '#ff3366';
+  for (let i = 0; i < 3; i++) {
+    c.fillRect(-panelW * 0.35, panelY + r * 0.1 + i * (r * 0.14), panelW * 0.7, r * 0.05);
+  }
+
+  c.restore();
+  c.restore();
+}
+
+// ★ ラリオス（LARIOS）新パーツ・全体回転合体描画関数
+function draw2D3DStyleLariosParts(c, x, y, partsOffset, assembled, rotAngle) {
+  c.save();
+  c.translate(x, y);
+
+  const po = partsOffset;
+  const cCore = assembled ? '#ff0055' : '#ffff00';
+
+  c.rotate(rotAngle);
+
+  c.save();
+  c.shadowBlur = 20;
+  c.shadowColor = cCore;
+
+  c.beginPath();
+  c.arc(0, 0, 16, 0, Math.PI * 2);
+  c.fillStyle = '#101520';
+  c.fill();
+  c.strokeStyle = 'rgba(255,255,255,0.6)';
+  c.lineWidth = 1;
+  c.stroke();
+
+  let coreGrad = c.createRadialGradient(-4, -4, 2, 0, 0, 12);
+  coreGrad.addColorStop(0, '#ffffff');
+  coreGrad.addColorStop(0.4, cCore);
+  coreGrad.addColorStop(1, '#440011');
+  c.beginPath();
+  c.arc(0, 0, 12, 0, Math.PI * 2);
+  c.fillStyle = coreGrad;
+  c.fill();
+  c.restore();
+
+  const drawPartGeometry = () => {
+    c.beginPath();
+    c.moveTo(-3, -3);
+    c.lineTo(-24, -3);
+    c.lineTo(-32, -11);
+    c.lineTo(-32, -24);
+    c.lineTo(-24, -32);
+    c.lineTo(-11, -32);
+    c.lineTo(-3, -24);
+    c.closePath();
+
+    let pGrad = c.createLinearGradient(-32, -32, 0, 0);
+    pGrad.addColorStop(0, '#ffffff');
+    pGrad.addColorStop(0.3, '#d0dae5');
+    pGrad.addColorStop(0.7, '#708090');
+    pGrad.addColorStop(1, '#25303b');
+
+    c.fillStyle = pGrad;
+    c.fill();
+    c.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    c.lineWidth = 1.2;
+    c.stroke();
+
+    c.beginPath();
+    c.moveTo(-6, -6);
+    c.lineTo(-20, -6);
+    c.lineTo(-26, -12);
+    c.lineTo(-26, -20);
+    c.lineTo(-12, -26);
+    c.lineTo(-6, -20);
+    c.closePath();
+    c.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    c.fill();
+    c.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    c.lineWidth = 1;
+    c.stroke();
+  };
+
+  const angles = [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+  angles.forEach((rot) => {
+    c.save();
+    c.rotate(rot);
+    c.translate(-po, -po);
+    drawPartGeometry();
+    c.restore();
+  });
+
+  c.restore();
+}
+
+// ==========================================
+// 2. グローバル変数宣言
 // ==========================================
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -38,12 +421,43 @@ const DEFAULT_HIGH_SCORES = [
 ];
 
 const AREA_THEME_COLORS = [
-  { r: 60, g: 75, b: 90, border: '#88aacc' }, { r: 75, g: 65, b: 85, border: '#aa88cc' }, 
-  { r: 55, g: 80, b: 70, border: '#77ccaa' }, { r: 85, g: 75, b: 60, border: '#cca877' }, 
-  { r: 80, g: 55, b: 65, border: '#cc7788' }, { r: 50, g: 70, b: 85, border: '#66aacc' }  
+  { r: 60, g: 75, b: 90, border: '#88aacc', bossTheme: '#00ccff' }, { r: 75, g: 65, b: 85, border: '#aa88cc', bossTheme: '#cc00ff' }, 
+  { r: 55, g: 80, b: 70, border: '#77ccaa', bossTheme: '#00ff88' }, { r: 85, g: 75, b: 60, border: '#cca877', bossTheme: '#ff8800' }, 
+  { r: 80, g: 55, b: 65, border: '#cc7788', bossTheme: '#ff0055' }, { r: 50, g: 70, b: 85, border: '#66aacc', bossTheme: '#00ffcc' }  
 ];
 
-// ★ ガリ（GALLI）3Dポリゴンデータ
+let gameState = 'SELECT_DEVICE';
+let controlMode = null;
+let previousGameState = '';
+let score = 0, gameFrames = 0, areaFrames = 0, areaLevel = 1, intervalTimer = 0, titleTimer = 0, demoEnemyIndex = 0;
+let B_destroyed = 0, b_destroyed = 0, bonusMessage = "";
+let hiddenDestroyedThisArea = 0, spawnModifier = 1.0, fireModifier = 1.0, sequenceIndex = 0;
+let isLooped = false;
+let lariosSpawnedThisArea = false;
+
+let lives = 2; 
+let nextExtendScore = 500000; 
+let extendAnimState = 'OFF';
+let extendAnimFrame = 0;
+let extendTextX = 0;
+let respawnTimer = 0;
+
+let pointerDown = false, prevPointerX = null, prevPointerY = null;
+let secretTapCount = 0, lastTapTime = 0, crownTapCount = 0, lastCrownTapTime = 0;
+const keys = {};
+let secretInput = "", invincibleUnlocked = false, playerName = "", rankIndex = -1;
+
+let map = null, starfield = null, player = null;
+let bullets = [], enemyBullets = [], enemies = [], activeWaves = [];
+let lariosBoss = null, areaBoss = null;
+let explosions = [], debrisList = [], items = [];
+
+const RIVA_CIRCLING_RADIUS = 350;
+const RIVA_SPEED = 0.04;
+
+// ==========================================
+// 3. 3Dモデルデータ ＆ 描画関数定義 (1)
+// ==========================================
 const GALLI_3D_MESH = {
   vertices: [
     {x:-10, y:-12, z:-4}, {x:-3, y:-12, z:-4}, {x:-3, y:2, z:-4}, {x:-10, y:2, z:-4},
@@ -116,7 +530,6 @@ function draw3DGalli(c, w, h, baseColor, rotYAnim) {
   });
   c.restore();
 }
-
 // ★ エトリ（ETTORI）3Dデータ ＆ 描画関数
 function createLightEttori3DMesh() {
   let vertices = [];
@@ -234,7 +647,471 @@ function draw3DEttori(c, w, h, baseColor, rotZAnim) {
   c.restore();
 }
 
-// ★ ロペ（LOPE）3D正12角形立体コア ＆ 正12角形リングデータ ＆ 描画関数
+// ★ スルタン（SULTAN）3Dデータ ＆ 描画関数
+function createExactDotSultanMesh() {
+  let vertices = [];
+  let faces = [];
+
+  const zBase = 0.0;
+  const zMid = 3.0;
+  const zTop = 6.0;
+
+  function addV(x, y, z) {
+    vertices.push({ x, y, z });
+    return vertices.length - 1;
+  }
+
+  let vT_L = addV( -8, -14, zMid);
+  let vT_R = addV(  8, -14, zMid);
+  let vM_L = addV(-16,  -8, zMid);
+  let vM_R = addV( 16,  -8, zMid);
+  let vB_L = addV(-16,  10, zMid);
+  let vB_R = addV( 16,  10, zMid);
+  let vC_L = addV( -9,  17, zMid);
+  let vC_R = addV(  9,  17, zMid);
+
+  faces.push({
+    v: [vT_L, vT_R, vM_R, vB_R, vC_R, vC_L, vB_L, vM_L],
+    color: '#ffffff', stroke: '#ff6699', zOffset: 0
+  });
+
+  faces.push({ v: [vT_L, vM_L, vB_L, vC_L], color: '#f0d0e0', stroke: 'none', zOffset: 0.5 });
+  faces.push({ v: [vT_R, vM_R, vB_R, vC_R], color: '#e0b0c0', stroke: 'none', zOffset: 0.5 });
+
+  let vN_TL = addV(-4, -20, zTop);
+  let vN_TR = addV( 4, -20, zTop);
+  let vN_BL = addV(-4, -10, zTop);
+  let vN_BR = addV( 4, -10, zTop);
+
+  faces.push({ v: [vN_TL, vN_TR, vN_BR, vN_BL], color: '#ffffff', stroke: '#000000', zOffset: 3 });
+
+  faces.push({ v: [vN_TL, vN_BL, vT_L], color: '#777777', stroke: '#000000', zOffset: 2 });
+  faces.push({ v: [vN_TR, vN_BR, vT_R], color: '#555555', stroke: '#000000', zOffset: 2 });
+
+  const slotW = 1.6;
+  const slotY1 = -9;
+  const slotY2 = 3;
+
+  [-5.5, 0, 5.5].forEach(xOff => {
+    let sTL = addV(xOff - slotW, slotY1, zBase);
+    let sTR = addV(xOff + slotW, slotY1, zBase);
+    let sBR = addV(xOff + slotW, slotY2, zBase);
+    let sBL = addV(xOff - slotW, slotY2, zBase);
+    faces.push({ v: [sTL, sTR, sBR, sBL], color: '#000000', stroke: 'none', zOffset: 4 });
+  });
+
+  let hTL = addV(-7.5, 1, zBase);
+  let hTR = addV( 7.5, 1, zBase);
+  let hBR = addV( 7.5, 4, zBase);
+  let hBL = addV(-7.5, 4, zBase);
+  faces.push({ v: [hTL, hTR, hBR, hBL], color: '#000000', stroke: 'none', zOffset: 4 });
+
+  [-5.5, 0, 5.5].forEach(xOff => {
+    let kTL = addV(xOff - 1.8,  6, zBase);
+    let kTR = addV(xOff + 1.8,  6, zBase);
+    let kBR = addV(xOff + 1.8, 11, zBase);
+    let kBL = addV(xOff - 1.8, 11, zBase);
+    faces.push({ v: [kTL, kTR, kBR, kBL], color: '#000000', stroke: 'none', zOffset: 4 });
+  });
+
+  let cL1 = addV(-14,  9, zTop);
+  let cL2 = addV(-11, 13, zTop);
+  let cL3 = addV(-10, 12, zTop);
+  let cL4 = addV(-13,  8, zTop);
+  faces.push({ v: [cL1, cL2, cL3, cL4], color: '#000000', stroke: 'none', zOffset: 5 });
+
+  let cR1 = addV( 14,  9, zTop);
+  let cR2 = addV( 11, 13, zTop);
+  let cR3 = addV( 10, 12, zTop);
+  let cR4 = addV( 13,  8, zTop);
+  faces.push({ v: [cR1, cR2, cR3, cR4], color: '#000000', stroke: 'none', zOffset: 5 });
+
+  return { vertices, faces };
+}
+
+const SULTAN_3D_MESH = createExactDotSultanMesh();
+
+function draw3DSultan(c, w, h, baseColor) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let scale = w / 38.0;
+
+  let transformed = SULTAN_3D_MESH.vertices.map(v => {
+    return { x: v.x * scale, y: v.y * scale, z: v.z };
+  });
+
+  let renderFaces = SULTAN_3D_MESH.faces.map(f => {
+    let pts = f.v.map(idx => transformed[idx]);
+    let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length + (f.zOffset || 0);
+    return { pts, color: f.color, stroke: f.stroke, z: avgZ };
+  });
+
+  renderFaces.sort((a, b) => a.z - b.z);
+
+  renderFaces.forEach(f => {
+    c.beginPath();
+    c.moveTo(f.pts[0].x, f.pts[0].y);
+    for (let i = 1; i < f.pts.length; i++) c.lineTo(f.pts[i].x, f.pts[i].y);
+    c.closePath();
+    c.fillStyle = f.color;
+    c.fill();
+    if (f.stroke && f.stroke !== 'none') {
+      c.strokeStyle = f.stroke;
+      c.lineWidth = 1.0;
+      c.stroke();
+    }
+  });
+  c.restore();
+}
+
+// ★ ガドーハ（GADOHA）グリーン3Dデータ ＆ 描画関数
+function createGreenGadoha3DMesh() {
+  let vertices = [];
+  let faces = [];
+
+  const sides = 16;
+  const zOuter = 2.0;
+  const zArm   = 4.0;
+  const zCore  = 7.0;
+
+  function addV(x, y, z) {
+    vertices.push({ x, y, z });
+    return vertices.length - 1;
+  }
+
+  const rOuterIn = 10.5;
+  const rOuterOut = 18.0;
+
+  let outerInV = [], outerOutV = [];
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    outerInV.push(addV(Math.cos(a) * rOuterIn, Math.sin(a) * rOuterIn, zOuter));
+    outerOutV.push(addV(Math.cos(a) * rOuterOut, Math.sin(a) * rOuterOut, zOuter));
+  }
+
+  for (let i = 0; i < sides; i++) {
+    let i1 = outerInV[i], i2 = outerInV[(i + 1) % sides];
+    let o1 = outerOutV[i], o2 = outerOutV[(i + 1) % sides];
+    let c = (i % 2 === 0) ? '#66e6b3' : '#33cc99';
+    faces.push({ v: [i1, i2, o2, o1], color: c, stroke: '#ffffff', zOffset: 1 });
+  }
+
+  const armWidth = 2.4;
+  for (let k = 0; k < 3; k++) {
+    let angle = (k * Math.PI * 2) / 3 - Math.PI / 2;
+    let cosA = Math.cos(angle), sinA = Math.sin(angle);
+    let perpX = -sinA * armWidth, perpY = cosA * armWidth;
+
+    let a1 = addV(perpX, perpY, zArm);
+    let a2 = addV(-perpX, -perpY, zArm);
+    let a3 = addV(cosA * rOuterIn - perpX, sinA * rOuterIn - perpY, zArm);
+    let a4 = addV(cosA * rOuterIn + perpX, sinA * rOuterIn + perpY, zArm);
+
+    faces.push({ v: [a1, a2, a3, a4], color: '#1a6647', stroke: '#99ffe6', zOffset: 2 });
+  }
+
+  const rCore = 6.5;
+  let coreV = [];
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    coreV.push(addV(Math.cos(a) * rCore, Math.sin(a) * rCore, zCore));
+  }
+
+  faces.push({ v: coreV, color: '#e6ffff', stroke: '#33cc99', zOffset: 4 });
+
+  for (let i = 0; i < sides; i++) {
+    let c1 = coreV[i], c2 = coreV[(i + 1) % sides];
+    let a1 = (i * Math.PI * 2) / sides, a2 = ((i + 1) * Math.PI * 2) / sides;
+    let b1 = addV(Math.cos(a1) * (rCore + 1.2), Math.sin(a1) * (rCore + 1.2), zArm);
+    let b2 = addV(Math.cos(a2) * (rCore + 1.2), Math.sin(a2) * (rCore + 1.2), zArm);
+
+    let shadowCol = (i % 2 === 0) ? '#269970' : '#1d8059';
+    faces.push({ v: [c1, c2, b2, b1], color: shadowCol, stroke: 'none', zOffset: 3 });
+  }
+
+  const rCenter = 3.0;
+  let centerV = [];
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    centerV.push(addV(Math.cos(a) * rCenter, Math.sin(a) * rCenter, zCore + 0.5));
+  }
+  faces.push({ v: centerV, color: '#ccff33', stroke: '#ffffff', zOffset: 5 });
+
+  return { vertices, faces };
+}
+
+const GADOHA_3D_MESH = createGreenGadoha3DMesh();
+
+function draw3DGadoha(c, w, h, rotZAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let scale = w / 42.0;
+
+  let cosZ = Math.cos(rotZAnim);
+  let sinZ = Math.sin(rotZAnim);
+
+  let transformed = GADOHA_3D_MESH.vertices.map(v => {
+    let rx = v.x * cosZ - v.y * sinZ;
+    let ry = v.x * sinZ + v.y * cosZ;
+    return { x: rx * scale, y: ry * scale, z: v.z };
+  });
+
+  let renderFaces = GADOHA_3D_MESH.faces.map(f => {
+    let pts = f.v.map(idx => transformed[idx]);
+    let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length + (f.zOffset || 0);
+    return { pts, color: f.color, stroke: f.stroke, z: avgZ };
+  });
+
+  renderFaces.sort((a, b) => a.z - b.z);
+
+  renderFaces.forEach(f => {
+    c.beginPath();
+    c.moveTo(f.pts[0].x, f.pts[0].y);
+    for (let i = 1; i < f.pts.length; i++) c.lineTo(f.pts[i].x, f.pts[i].y);
+    c.closePath();
+    c.fillStyle = f.color;
+    c.fill();
+    if (f.stroke && f.stroke !== 'none') {
+      c.strokeStyle = f.stroke;
+      c.lineWidth = 0.8;
+      c.stroke();
+    }
+  });
+  c.restore();
+}
+
+// ★ アマラ（AMARA）3Dデータ ＆ 描画関数
+function createCompleteAmara3DMesh() {
+  let vertices = [];
+  let faces = [];
+
+  function addV(x, y, z) {
+    vertices.push({ x, y, z });
+    return vertices.length - 1;
+  }
+
+  function addBox(x, y, z, w, h, d, colorFront, colorSide, colorTop) {
+    let hw = w / 2, hh = h / 2, hd = d / 2;
+
+    let v0 = addV(x - hw, y - hh, z - hd);
+    let v1 = addV(x + hw, y - hh, z - hd);
+    let v2 = addV(x + hw, y + hh, z - hd);
+    let v3 = addV(x - hw, y + hh, z - hd);
+
+    let v4 = addV(x - hw, y - hh, z + hd);
+    let v5 = addV(x + hw, y - hh, z + hd);
+    let v6 = addV(x + hw, y + hh, z + hd);
+    let v7 = addV(x - hw, y + hh, z + hd);
+
+    faces.push({ v: [v0, v1, v2, v3], c: colorFront });
+    faces.push({ v: [v5, v4, v7, v6], c: colorFront });
+    faces.push({ v: [v4, v0, v3, v7], c: colorSide });
+    faces.push({ v: [v1, v5, v6, v2], c: colorSide });
+    faces.push({ v: [v4, v5, v1, v0], c: colorTop });
+    faces.push({ v: [v3, v2, v6, v7], c: colorTop });
+  }
+
+  addBox(-12, 0, 0, 4, 26, 8, '#ff3333', '#cc0000', '#ff6666');
+  addBox( 12, 0, 0, 4, 26, 8, '#ff3333', '#990000', '#ff6666');
+
+  addBox(-7.5, 0, 0, 3, 22, 6, '#e60000', '#aa0000', '#ff4d4d');
+  addBox( 7.5, 0, 0, 3, 22, 6, '#e60000', '#880000', '#ff4d4d');
+
+  const sides = 12;
+  const rCore = 3.5;
+  const length = 12;
+  let coreV1 = [], coreV2 = [];
+
+  for (let i = 0; i < sides; i++) {
+    let a = (i * Math.PI * 2) / sides;
+    let cy = Math.cos(a) * rCore;
+    let cz = Math.sin(a) * rCore;
+    coreV1.push(addV(-length / 2, cy, cz));
+    coreV2.push(addV( length / 2, cy, cz));
+  }
+
+  for (let i = 0; i < sides; i++) {
+    let i1 = i, i2 = (i + 1) % sides;
+    let c = (i % 2 === 0) ? '#ffffff' : '#cccccc';
+    faces.push({ v: [coreV1[i1], coreV2[i1], coreV2[i2], coreV1[i2]], c: c });
+  }
+
+  addBox(0, 0, 0, 5, 8, 5, '#ffffff', '#aaaaaa', '#ffffff');
+  addBox(0, 0, 4, 3, 4, 3, '#ffff00', '#cccc00', '#ffff80');
+  addBox(0, 0, -4, 3, 4, 3, '#ffff00', '#999900', '#ffff80');
+
+  return { vertices, faces };
+}
+
+const AMARA_3D_MESH = createCompleteAmara3DMesh();
+
+function draw3DAmara(c, w, h, rotYAnim) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let scale = w / 34.0;
+  let cameraDist = 350;
+  let rotX = 0.45;
+  let rotY = rotYAnim || 0;
+
+  let cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+  let cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+
+  let transformed = AMARA_3D_MESH.vertices.map(v => {
+    let x1 = v.x * cosY + v.z * sinY;
+    let z1 = -v.x * sinY + v.z * cosY;
+    let y2 = v.y * cosX - z1 * sinX;
+    let z2 = v.y * sinX + z1 * cosX;
+    let perspective = cameraDist / (cameraDist + z2 + 100);
+    return { x: x1 * scale * perspective, y: y2 * scale * perspective, z: z2 };
+  });
+
+  let renderFaces = AMARA_3D_MESH.faces.map(f => {
+    let pts = f.v.map(idx => transformed[idx]);
+    let avgZ = pts.reduce((sum, p) => sum + p.z, 0) / pts.length;
+    
+    let v0 = pts[0], v1 = pts[1], v2 = pts[2];
+    let nx = (v1.y - v0.y) * (v2.z - v0.z) - (v1.z - v0.z) * (v2.y - v0.y);
+    let ny = (v1.z - v0.z) * (v2.x - v0.x) - (v1.x - v0.x) * (v2.z - v0.z);
+    let nz = (v1.x - v0.x) * (v2.y - v0.y) - (v1.y - v0.y) * (v2.x - v0.x);
+
+    return { pts, color: f.c, z: avgZ, isFront: nz > 0 };
+  });
+
+  renderFaces.sort((a, b) => b.z - a.z);
+
+  renderFaces.forEach(f => {
+    if (!f.isFront) return;
+    c.beginPath();
+    c.moveTo(f.pts[0].x, f.pts[0].y);
+    for (let i = 1; i < f.pts.length; i++) c.lineTo(f.pts[i].x, f.pts[i].y);
+    c.closePath();
+    c.fillStyle = f.color;
+    c.fill();
+    c.strokeStyle = "rgba(255, 220, 220, 0.4)";
+    c.lineWidth = 0.8;
+    c.stroke();
+  });
+  c.restore();
+}
+
+// ★ トッパー（TOPPER）擬似3D描画関数（シルバー＆レッドコア）
+function draw3DTopper(c, w, h) {
+  c.save();
+  c.translate(w / 2, h / 2);
+  let r = w * 0.45;
+
+  function getOctagonPt(rad) {
+    let pts = [];
+    for (let i = 0; i < 8; i++) {
+      let angle = (i * Math.PI / 4) - Math.PI / 8;
+      pts.push({ x: Math.cos(angle) * rad, y: Math.sin(angle) * rad });
+    }
+    return pts;
+  }
+
+  // A. 正八角形外枠 (シルバーグラデーション)
+  let outerPts = getOctagonPt(r);
+  c.beginPath();
+  c.moveTo(outerPts[0].x, outerPts[0].y);
+  for (let i = 1; i < 8; i++) c.lineTo(outerPts[i].x, outerPts[i].y);
+  c.closePath();
+  
+  let baseGrad = c.createRadialGradient(-r*0.2, -r*0.2, r*0.1, 0, 0, r);
+  baseGrad.addColorStop(0, '#ffffff');
+  baseGrad.addColorStop(0.4, '#cccccc');
+  baseGrad.addColorStop(0.8, '#8899a6');
+  baseGrad.addColorStop(1, '#445566');
+  c.fillStyle = baseGrad;
+  c.fill();
+  c.strokeStyle = '#ffffff';
+  c.lineWidth = 1.5;
+  c.stroke();
+
+  // B. 多角層リングパネル
+  let ringRadii = [r * 0.85, r * 0.65, r * 0.45];
+  for (let k = 0; k < ringRadii.length; k++) {
+    let rCurr = ringRadii[k];
+    let pts = getOctagonPt(rCurr);
+    
+    c.beginPath();
+    c.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < 8; i++) c.lineTo(pts[i].x, pts[i].y);
+    c.closePath();
+    
+    let alpha = 0.25 + k * 0.15;
+    c.fillStyle = (k % 2 === 0) ? `rgba(255, 255, 255, ${alpha})` : `rgba(30, 40, 50, ${alpha})`;
+    c.fill();
+    c.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    c.lineWidth = 1.0;
+    c.stroke();
+  }
+
+  // C. 斜め4方向アーム
+  let rCoreEdge = r * 0.25;
+  for (let i = 0; i < 4; i++) {
+    let aCenter = (i * Math.PI / 2) + Math.PI / 4;
+    let spread = Math.PI / 12;
+
+    let a1 = aCenter - spread;
+    let a2 = aCenter + spread;
+
+    c.beginPath();
+    c.moveTo(Math.cos(a1) * rCoreEdge, Math.sin(a1) * rCoreEdge);
+    c.lineTo(Math.cos(a1) * r * 0.98, Math.sin(a1) * r * 0.98);
+    c.lineTo(Math.cos(a2) * r * 0.98, Math.sin(a2) * r * 0.98);
+    c.lineTo(Math.cos(a2) * rCoreEdge, Math.sin(a2) * rCoreEdge);
+    c.closePath();
+
+    let armGrad = c.createLinearGradient(0, 0, Math.cos(aCenter) * r, Math.sin(aCenter) * r);
+    armGrad.addColorStop(0, '#ffffff');
+    armGrad.addColorStop(0.5, '#dddddd');
+    armGrad.addColorStop(1, '#667788');
+
+    c.fillStyle = armGrad;
+    c.fill();
+    c.strokeStyle = '#ffffff';
+    c.lineWidth = 1.0;
+    c.stroke();
+  }
+
+  // D. 中央正四面体 (ピラミッド) コア (レッド系統)
+  let cSize = r * 0.28;
+  let coreCorner = [
+    { x: 0, y: -cSize },
+    { x: cSize, y: 0 },
+    { x: 0, y: cSize },
+    { x: -cSize, y: 0 }
+  ];
+  let apex = { x: -cSize * 0.15, y: -cSize * 0.15 };
+
+  let faceColors = ['#ff88a0', '#ff2255', '#cc0033', '#880022'];
+  for (let i = 0; i < 4; i++) {
+    let p1 = coreCorner[i];
+    let p2 = coreCorner[(i + 1) % 4];
+
+    c.beginPath();
+    c.moveTo(apex.x, apex.y);
+    c.lineTo(p1.x, p1.y);
+    c.lineTo(p2.x, p2.y);
+    c.closePath();
+
+    c.fillStyle = faceColors[i];
+    c.fill();
+    c.strokeStyle = '#ffeeff';
+    c.lineWidth = 1.0;
+    c.stroke();
+  }
+
+  c.beginPath();
+  c.arc(apex.x, apex.y, 2.8, 0, Math.PI * 2);
+  c.fillStyle = '#ffffff';
+  c.shadowBlur = 8;
+  c.shadowColor = '#ff0055';
+  c.fill();
+
+  c.restore();
+}
+// ★ ロペ（LOPE）3Dデータ ＆ 描画関数
 function create3DLopeCoreAndRingMesh() {
   let vertices = [];
   let faces = [];
@@ -356,7 +1233,7 @@ function draw3DLope(c, w, h, baseColor, rotZAnim) {
   c.restore();
 }
 
-// ★ パタータ（PATARTA）底面水平 3Dデータ ＆ 描画関数
+// ★ パタータ（PATARTA）3Dデータ ＆ 描画関数
 function createHorizontalPatartaMesh() {
   let vertices = [];
   let faces = [];
@@ -470,7 +1347,7 @@ function draw3DPatarta(c, w, h, baseColor) {
   c.restore();
 }
 
-// ★ ジラール（GIRARD）超濃色パープル 3Dデータ ＆ 描画関数
+// ★ ジラール（GIRARD）3Dデータ ＆ 描画関数
 function createDarkPurpleGirardMesh() {
   let vertices = [];
   let faces = [];
@@ -799,7 +1676,7 @@ function draw3DSplitta(c, w, h, baseColor, rotZAnim) {
   c.restore();
 }
 
-// ★ ティッタ（TITTA）超軽量描画
+// ★ ティッタ（TITTA）描画
 function draw2D3DStyleTitta(c, w, h, baseColor, rotYAnim) {
   c.save();
   c.translate(w / 2, h / 2);
@@ -1419,6 +2296,70 @@ function draw2D3DStyleNeira(c, w, h, baseColor, rotYAnim) {
 
   c.restore();
 }
+
+// ==========================================
+// 4. エンジンクラス群 (Sound, Starfield, Effects)
+// ==========================================
+class SoundEngine {
+  constructor() { this.ctx = null; this.bgmPhase = 'STOP'; this.bgmStep = 0; this.bgmFrameCount = 0; this.audioEnabled = false; this.noiseBuffer = null; }
+  init() { try { if (!this.ctx) { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); const bSize = this.ctx.sampleRate * 2; this.noiseBuffer = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate); const data = this.noiseBuffer.getChannelData(0); for (let i = 0; i < bSize; i++) data[i] = Math.random() * 2 - 1; } if (this.ctx.state === 'suspended') this.ctx.resume(); this.audioEnabled = true; } catch (e) {} }
+  playTone(f, t, d, v = 0.1) { if (!this.audioEnabled || !this.ctx) return; try { const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime); g.gain.setValueAtTime(0, this.ctx.currentTime); g.gain.linearRampToValueAtTime(v, this.ctx.currentTime + 0.01); g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + d); o.connect(g); g.connect(this.ctx.destination); o.start(this.ctx.currentTime); o.stop(this.ctx.currentTime + d); } catch (e) {} }
+  playNoise(d, v = 0.2) { if (!this.audioEnabled || !this.ctx || !this.noiseBuffer) return; try { const n = this.ctx.createBufferSource(); n.buffer = this.noiseBuffer; const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(800, this.ctx.currentTime); f.frequency.linearRampToValueAtTime(100, this.ctx.currentTime + d); const g = this.ctx.createGain(); g.gain.setValueAtTime(v, this.ctx.currentTime); g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + d); n.connect(f); f.connect(g); g.connect(this.ctx.destination); n.start(this.ctx.currentTime); n.stop(this.ctx.currentTime + d); } catch (e) {} }
+  playLaser() { this.playTone(1400, 'sawtooth', 0.08, 0.04); } playEnemyLaser() { this.playTone(1800, 'square', 0.1, 0.02); } playHit() { this.playNoise(0.1, 0.08); } playExplosion() { this.playNoise(0.3, 0.3); }
+  playHiddenAppear() { this.playTone(1046, 'sine', 0.08, 0.15); setTimeout(() => this.playTone(2093, 'sine', 0.15, 0.2), 60); } playHiddenDestroy() { [1318, 1567, 2093, 2637].forEach((f, i) => { setTimeout(() => this.playTone(f, 'triangle', 0.12, 0.2), i * 40); }); }
+  playStart() { [880, 1760].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.1, 0.1), i * 100)); } playBonus() { [523, 659, 784, 1046, 1318].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.1, 0.15), i * 60)); } playSecretBonus() { [440, 554, 659, 880, 1108, 1318, 1760].forEach((f, i) => setTimeout(() => this.playTone(f, 'sawtooth', 0.15, 0.15), i * 80)); }
+  playExtend() { [523, 659, 784, 1046, 1318, 1567, 2093].forEach((f, i) => setTimeout(() => this.playTone(f, 'triangle', 0.15, 0.2), i * 70)); }
+  playAreaClear() { [523, 659, 784, 1046, 1567].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.2, 0.2), i * 120)); } playCleopatraBonus() { [440, 554, 659, 880, 1108, 1318, 1760, 2217, 2637].forEach((f, i) => setTimeout(() => this.playTone(f, 'sawtooth', 0.2, 0.2), i * 100)); }
+  tickBGM(s, f) { if (!this.audioEnabled || s === 'GAMEOVER' || s === 'INTERVAL' || s === 'NAME_ENTRY' || s === 'SELECT_DEVICE' || s === 'PAUSE') { this.bgmPhase = 'STOP'; return; } if (s === 'PLAYING' && f < 300) { if (this.bgmPhase !== 'INTRO') { this.bgmPhase = 'INTRO'; this.bgmStep = 0; } if (f % 12 === 0) { const i = [440, 587, 659, 880, 659, 880, 1174, 1318]; if (this.bgmStep % 16 < i.length) this.playTone(i[this.bgmStep % 16], 'square', 0.15, 0.1); this.bgmStep++; } } else if (s === 'PLAYING' || s === 'BOSS_PHASE') { if (this.bgmPhase !== 'LOOP') { this.bgmPhase = 'LOOP'; this.bgmStep = 0; this.bgmFrameCount = 0; } this.bgmFrameCount++; if (this.bgmFrameCount % (s === 'BOSS_PHASE' ? 4 : 6) === 0) { const b = [110, 164, 220, 164, 146, 220, 293, 220], l = [440, 0, 659, 0, 587, 0, 880, 0, 440, 0, 659, 0, 587, 880, 1174, 1318]; const st = this.bgmStep % 16, pu = s === 'BOSS_PHASE' ? 1.5 : 1.0; this.playTone(b[st % 8] * pu, 'sawtooth', 0.1, 0.05); if (l[st] > 0) this.playTone(l[st] * pu, 'square', 0.1, 0.04); this.bgmStep++; } } }
+}
+const audio = new SoundEngine();
+
+class Starfield {
+  constructor() { this.stars = []; const c = ['#ffffff', '#aaffff', '#ffccff', '#ccffff', '#88bbff', '#ff88cc']; for (let i = 0; i < 120; i++) { this.stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, s: 0.3 + Math.random() * 4.5, c: c[Math.floor(Math.random() * c.length)], sz: Math.random() > 0.85 ? 3.0 : (Math.random() > 0.5 ? 2.0 : 1.0), a: 0.1 + Math.random() * 0.9 }); } this.nebulae = [{ x: 100, y: 150, r: 180, c: 'rgba(20,40,90,0.25)' }, { x: 380, y: 400, r: 220, c: 'rgba(60,20,80,0.2)' }, { x: 200, y: 550, r: 160, c: 'rgba(0,60,90,0.18)' }]; }
+  update(sm = 1.0) { this.stars.forEach(s => { s.y += s.s * sm; if (s.y > canvas.height) { s.y = -10; s.x = Math.random() * canvas.width; } }); this.nebulae.forEach(n => { n.y += 0.3 * sm; if (n.y - n.r > canvas.height) { n.y = -n.r; n.x = Math.random() * canvas.width; } }); }
+  draw() { ctx.shadowBlur = 0; this.nebulae.forEach(n => { let g = ctx.createRadialGradient(n.x, n.y, 10, n.x, n.y, n.r); g.addColorStop(0, n.c); g.addColorStop(1, 'transparent'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill(); }); this.stars.forEach(s => { ctx.globalAlpha = s.a; ctx.fillStyle = s.c; ctx.beginPath(); ctx.arc(s.x, s.y, s.sz / 2, 0, Math.PI * 2); ctx.fill(); }); ctx.globalAlpha = 1.0; }
+}
+
+class Item {
+  constructor(x, y, t) { this.x = x; this.y = y; this.width = 32; this.height = 32; this.type = t; this.lifeTime = 0; this.toRemove = false; this.startX = x; }
+  update() { this.lifeTime++; this.y += 1.5; this.x = this.startX + Math.sin(this.lifeTime * 0.05) * 40; if (this.y > canvas.height + 50) this.toRemove = true; }
+  draw() { ctx.save(); ctx.translate(this.x, this.y); ctx.shadowBlur = 15; ctx.shadowColor = '#00ffff'; drawPoly(ctx, [[16, 0], [32, 16], [16, 32], [0, 16]], '#00ffff', 'rgba(255,255,255,0.8)'); drawPoly(ctx, [[16, 4], [28, 16], [16, 28], [4, 16]], '#0055ff'); ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px "Segoe UI"'; ctx.textAlign = 'center'; ctx.fillText('P', 16, 23); ctx.restore(); }
+}
+
+class Bullet {
+  constructor(x, y) { this.x = x; this.y = y; this.width = 4; this.height = 18; this.speed = 18; this.toRemove = false; }
+  update() { this.y -= this.speed; if (this.y < -20) this.toRemove = true; }
+  draw() { ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = '#00ffff'; ctx.fillStyle = '#ffffff'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(this.x, this.y, this.width, this.height, 2); else ctx.fillRect(this.x, this.y, this.width, this.height); ctx.fill(); ctx.restore(); }
+}
+
+class EnemyBullet {
+  constructor(x, y, targetX, targetY, sm = 1.0) { 
+    this.x = isNaN(x) ? 0 : x; this.y = isNaN(y) ? 0 : y; this.width = 8; this.height = 8; this.toRemove = false; 
+    let a = Math.atan2(targetY - y, targetX - x); 
+    this.speedMult = isNaN(sm) ? 1.0 : sm; 
+    this.baseVx = isNaN(a) ? 0 : Math.cos(a) * 5; 
+    this.baseVy = isNaN(a) ? 5 : Math.sin(a) * 5; 
+    this.isLaser = false; 
+  }
+  update() { this.x += this.baseVx * this.speedMult; this.y += this.baseVy * this.speedMult; if (this.y > canvas.height + 50 || this.y < -50 || this.x < -50 || this.x > canvas.width + 50) this.toRemove = true; }
+  draw() { if (isNaN(this.x) || isNaN(this.y)) return; ctx.save(); if (this.isLaser) { ctx.shadowBlur = 15; ctx.shadowColor = '#00ffff'; ctx.fillStyle = '#ffffff'; ctx.fillRect(this.x, this.y - 10, 4, 20); } else { ctx.shadowBlur = 15; ctx.shadowColor = '#ff0044'; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI * 2); ctx.fill(); } ctx.restore(); }
+}
+
+class Explosion {
+  constructor(x, y, c = '#ff8800', il = false) { this.x = x; this.y = y; this.radius = 2; this.maxRadius = il ? 80 : 25; this.color = c || '#ffffff'; this.dead = false; this.speed = il ? 4 : 2; }
+  update() { this.radius += this.speed; if (this.radius > this.maxRadius) this.dead = true; }
+  draw() { try { if (isNaN(this.x) || isNaN(this.y)) return; let a = Math.max(0, Math.min(1, 1 - (this.radius / this.maxRadius))); if (isNaN(a)) a = 0; ctx.save(); ctx.globalAlpha = a; ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.strokeStyle = this.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.3, 0, Math.PI * 2); ctx.fill(); ctx.restore(); } catch (e) {} }
+}
+
+class Debris {
+  constructor(x, y, c, ml) { this.x = x; this.y = y; let a = Math.random() * Math.PI * 2; let s = Math.random() * 4 + 1; this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s; this.color = c; this.maxLife = ml; this.life = ml; this.size = Math.random() * 4 + 2; this.rotation = Math.random() * Math.PI * 2; this.rotSpeed = (Math.random() - 0.5) * 0.5; this.dead = false; }
+  update() { this.x += this.vx; this.y += this.vy; this.rotation += this.rotSpeed; this.life--; if (this.life <= 0) this.dead = true; }
+  draw() { if (isNaN(this.x) || isNaN(this.y)) return; ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation); ctx.globalAlpha = Math.max(0, this.life / this.maxLife); ctx.fillStyle = this.color; ctx.beginPath(); ctx.moveTo(0, -this.size); ctx.lineTo(this.size, this.size); ctx.lineTo(-this.size, this.size); ctx.closePath(); ctx.fill(); ctx.restore(); }
+}
+function spawnDebris(x, y, c, ct, l) { for (let i = 0; i < ct; i++) debrisList.push(new Debris(x, y, c, l)); }
+// ==========================================
+// 5. データ定義 (ENEMY_PATTERNS, TYPES, DEMO_LIST, SEQUENCE, MAP_PATTERNS)
+// ==========================================
 const ENEMY_PATTERNS_DATA = {
   "RIVA": {
     "color": "#3399ff", "hp": 1, "score": 200,
@@ -1533,7 +2474,7 @@ const ENEMY_PATTERNS_DATA = {
     "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "AMARA": {
-    "color": "#ff33cc", "hp": 1, "score": 100,
+    "color": "#ff3333", "hp": 1, "score": 100,
     "desc": "高速爆撃機。自機手前で鋭角に反転。",
     "category": "dive", "speed": 5,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
@@ -1554,8 +2495,8 @@ const ENEMY_PATTERNS_DATA = {
     "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "GUILER": {
-    "color": "#ff0000", "hp": 15, "score": 1000,
-    "desc": "大型空母。画面下から出現し小型機を発進。",
+    "color": "#ff00ff", "hp": 15, "score": 1000,
+    "desc": "大型空母。画面下からバックアタック。",
     "category": "sine", "speed": 7,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
     "formation": { "count": 6, "layout": "single_file", "spacing": 28, "interval": 8 }
@@ -1585,12 +2526,12 @@ const ENEMY_TYPES = {
   'SPLITTA': { color: '#88ffff', shape: 'mine', hp: 2, score: 500 },
   'GIRARD': { color: '#cc00ff', shape: 'mine', hp: 8, score: 1000 },
   'PATARTA': { color: '#99ff33', shape: 'patarta', hp: 2, score: 200 },
-  'SULTAN': { color: '#00ffaa', shape: 'stealth', hp: 1, score: 100 },
-  'GADOHA': { color: '#cccccc', shape: 'scout', hp: 1, score: 500 },
-  'AMARA': { color: '#cc0000', shape: 'dagger', hp: 1, score: 100 },
-  'TOPPER': { color: '#ffcc00', shape: 'heavy', hp: 4, score: 1000 },
-  'SUPER_SONIC': { color: '#ffffff', shape: 'star', hp: 1, score: 300 },
-  'GUILER': { color: '#ff00ff', shape: 'carrier', hp: 15, score: 5000 }
+  'SULTAN': { color: '#ff6699', shape: 'sultan', hp: 1, score: 100 },
+  'GADOHA': { color: '#33cc99', shape: 'scout', hp: 1, score: 500 },
+  'AMARA': { color: '#ff3333', shape: 'amara', hp: 1, score: 100 },
+  'TOPPER': { color: '#ffff00', shape: 'topper', hp: 4, score: 1000 },
+  'SUPER_SONIC': { color: '#ffffff', shape: 'supersonic', hp: 1, score: 300 },
+  'GUILER': { color: '#ff00ff', shape: 'guiler', hp: 15, score: 5000 }
 };
 
 const ENEMY_DEMO_LIST = [
@@ -1609,12 +2550,12 @@ const ENEMY_DEMO_LIST = [
   { name: 'SPLITTA (スプリッタ)', pts: '500 PTS', desc: '硬度反射板機雷。撃つ度に3回まで分裂する。', shape: 'mine', color: '#88ffff' },
   { name: 'GIRARD (ジラール)', pts: '1000 PTS', desc: '浮遊機雷。耐久8発。爆発時画面全敵誘爆！', shape: 'mine', color: '#cc00ff' },
   { name: 'PATARTA (パタータ)', pts: '200 / 500 PTS', desc: '重爆撃機。中央で開砲後倒すと500点。', shape: 'patarta', color: '#99ff33' },
-  { name: 'SULTAN (スルタン)', pts: '100 PTS', desc: '磁力戦闘機。画面端で反射しながらジグザグ移動。', shape: 'stealth', color: '#00ffaa' },
-  { name: 'GADOHA (ガドーハ)', pts: '500 PTS', desc: '無人偵察機。中央で停止し大量弾幕を放射し退却。', shape: 'scout', color: '#cccccc' },
-  { name: 'AMARA (アマラ)', pts: '100 PTS', desc: '高速爆撃機。自機の少し下で鋭角に反転する。', shape: 'dagger', color: '#cc0000' },
-  { name: 'TOPPER (トッパー)', pts: '1000 PTS', desc: 'バリア戦闘機。撃つ度に左右揺れが激化。', shape: 'heavy', color: '#ffcc00' },
-  { name: 'SUPER SONIC (Sソニック)', pts: '300 PTS', desc: '小型磁力兵器。超スピードで直線急降下。', shape: 'star', color: '#ffffff' },
-  { name: 'GUILER (ガイラ)', pts: '1000 PTS', desc: '大型戦闘空母。画面下からバックアタック。', shape: 'carrier', color: '#ff00ff' },
+  { name: 'SULTAN (スルタン)', pts: '100 PTS', desc: '磁力戦闘機。画面端で反射しながらジグザグ移動。', shape: 'sultan', color: '#ff6699' },
+  { name: 'GADOHA (ガドーハ)', pts: '500 PTS', desc: '無人偵察機。中央で停止し大量弾幕を放射し退却。', shape: 'scout', color: '#33cc99' },
+  { name: 'AMARA (アマラ)', pts: '100 PTS', desc: '高速爆撃機。自機の少し下で鋭角に反転する。', shape: 'amara', color: '#ff3333' },
+  { name: 'TOPPER (トッパー)', pts: '1000 PTS', desc: 'バリア戦闘機。撃つ度に左右揺れが激化。', shape: 'topper', color: '#ffff00' },
+  { name: 'SUPER SONIC (Sソニック)', pts: '300 PTS', desc: '小型磁力兵器。超スピードで直線急降下。', shape: 'supersonic', color: '#ffffff' },
+  { name: 'GUILER (ガイラ)', pts: '1000 PTS', desc: '大型戦闘空母。画面下からバックアタック。', shape: 'guiler', color: '#ff00ff' },
   { name: 'LARIOS (ラリオス)', pts: '1000 / 50000 PTS', desc: '大型合体浮遊要塞。合体完了前にCore撃破で5万点！', shape: 'larios', color: '#ff0055' },
   { name: 'BIGORRA (ビゴーラ)', pts: '300 PTS', desc: '2×2巨大地上要塞。大陸エネルギーの制御核。', shape: 'bigorra', color: '#1e2832' },
   { name: 'ZMUDA (ジムダ)', pts: '500 PTS', desc: 'エネルギー貯蔵施設。連続攻撃で破壊せよ。', shape: 'jimda', color: '#440044' },
@@ -1680,7 +2621,7 @@ const CUSTOM_MAP_PATTERNS = {
   },
   "PATTERN_2": {
     "areas": [2, 6, 10, 14, 18, 22],
-    "map": ["000000000000","100000000001","110000000111","S10000001111","110000001S11","11100000111-","1+1000001111","111000001111","111000011111","1T1000011B1C","1T1000011R11","111100001111","111110000111","1S1110000111","111111000111","111111000111","111R1110001S","CB111+100011","111111100011","111111000111","1111S1001111","111110001R11","11110001111C","1S1000011B11","110000001111","1100000011-1","TT1000000111","11100000011T","11100000001T","1+1000000011","111100000011","111100000011","1S1100000S11","111110000111","111111000111","11111110011S","C1111R100111","CB1B1R100111","111111100111","1ZZZZ1000111","1111S0000111","1110000001-1","111000001111","110000011111","1+000001R11C","110000011B11","111000011111","S11000001111","111100001ZZ1","111110000111","RB1C10000111","1111110001T1","1ZZ1ZZ000111","11+111000111","111111000111","1111111001-1","111R11000111","1B1C11000111","111110000011","1T1100000011","111000000111","1110000111S1","110000111111","11000011-111","110000111ZZ1","1+1000111111","111000111B11","111000011CR1","111000011111","1S1100001TT1","111100001111","111100000111","1TTT10000011","111110000011","1R111100011-","111111000111","1B11+10011S1","11C1110011R1","111111001111","111111001B11","1ZZZZ10011C1","111110001111","111110000111","1111100001TT","CB1R10000011","111110000011","1T1110000111","111100001111","1+100011ZZZZ","111000111111","11000111-111","S11001111111","11100111RB1C","111000111111","111000001111","1110000001S1","111100000111","1T11100001TT","111110000111","111111000111","111111000011","RB1C11100011","11111S100011","111111100111","1ZZZZ11011C1","1111+1101111","111111101B1R","111111001111","CB1R11000111","1111100001-1","111110000111","111100001111","1TT1000111T1","111100011111","11000011111R","1100001-1B11","S11000111C11","111100011111","111100000111","111R10000111","1B1110000111","11C110000TTS","111110001111","1ZZ110001111","1+111001ZZZZ","111T10011111","111110011111","111C1001RB1C","RB1100001111","111100001111","1S11000011-1","111000000111","110000000111","100000000001","000000000000"]
+    "map": ["000000000000","100000000001","110000000111","S10000001111","110000001S11","11100000111-","1+1000001111","111000001111","111000011111","1T1000011B1C","1T1000011R11","111100001111","111110000111","1S1110000111","111111000111","111111000111","111R1110001S","CB111+100011","111111100011","111111000111","1111S1001111","111110001R11","11110001111C","1S1000011B11","110000001111","1100000011-1","TT1000000111","11100000011T","11100000001T","1+1000000011","111100000011","111100000011","1S1100000S11","111110000111","111111000111","11111110011S","C1111R100111","CB1B1R100111","111111100111","1ZZZZ1000111","1111S0000111","1110000001-1","111000001111","110000011111","1+000001R11C","110000011B11","111000011111","S11000001111","111100001ZZ1","111110000111","RB1C10000111","1111110001T1","1ZZ1ZZ000111","11+111000111","111111000111","1111111001-1","111R11000111","1B1C11000111","111110000011","1T1100000011","111000000111","1110000111S1","110000111111","1100001-1B11","110000111ZZ1","1+1000111111","111000111B11","111000011CR1","111000011111","1S1100001TT1","111100001111","111100000111","1TTT10000011","111110000011","1R111100011-","111111000111","1B11+10011S1","11C1110011R1","111111001111","111111001B11","1ZZZZ10011C1","111110001111","111110000111","1111100001TT","CB1R10000011","111110000011","1T11100001TT","111100001111","1+100011ZZZZ","111000111111","11000111-111","S11001111111","11100111RB1C","111000111111","111000001111","1110000001S1","111100000111","1T11100001TT","111110000111","111111000111","111111000011","RB1C11100011","11111S100011","111111100111","1ZZZZ11011C1","1111+1101111","111111101B1R","111111001111","CB1R11000111","1111100001-1","111110000111","111100001111","1TT1000111T1","111100011111","11000011111R","1100001-1B11","S11000111C11","111100011111","111100000111","111R10000111","1B1110000111","11C110000TTS","111110001111","1ZZ110001111","1+111001ZZZZ","111T10011111","111110011111","111C1001RB1C","RB1100001111","111100001111","1S11000011-1","111000000111","110000000111","100000000001","000000000000"]
   },
   "PATTERN_3": {
     "areas": [3, 7, 11, 15, 19, 23],
@@ -1691,219 +2632,9 @@ const CUSTOM_MAP_PATTERNS = {
     "map": ["000000000000","111111111111","111111111111","111111111111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111111111111","111111111111","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","111111111111","111111111111","11SSSSSSSS11","11SSSSSSSS11","111111111111","111111111111","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","111111111111","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","111111111111","111111111111","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","000000000000"]
   }
 };
-// ==========================================
-// 2. グローバル変数とユーティリティ
-// ==========================================
-let gameState = 'SELECT_DEVICE';
-let controlMode = null;
-let previousGameState = '';
-let score = 0, gameFrames = 0, areaFrames = 0, areaLevel = 1, intervalTimer = 0, titleTimer = 0, demoEnemyIndex = 0;
-let B_destroyed = 0, b_destroyed = 0, bonusMessage = "";
-let hiddenDestroyedThisArea = 0, spawnModifier = 1.0, fireModifier = 1.0, sequenceIndex = 0;
-let isLooped = false;
-let lariosSpawnedThisArea = false;
-
-let lives = 2; // 初期ストック 2機
-let nextExtendScore = 500000; // 初回1UP：50万点
-let extendAnimState = 'OFF';
-let extendAnimFrame = 0;
-let extendTextX = 0;
-let respawnTimer = 0;
-
-let pointerDown = false, prevPointerX = null, prevPointerY = null;
-let secretTapCount = 0, lastTapTime = 0, crownTapCount = 0, lastCrownTapTime = 0;
-const keys = {};
-let secretInput = "", invincibleUnlocked = false, playerName = "", rankIndex = -1;
-
-let map = null, starfield = null, player = null;
-let bullets = [], enemyBullets = [], enemies = [], activeWaves = [];
-let lariosBoss = null, areaBoss = null;
-let explosions = [], debrisList = [], items = [];
-
-const RIVA_CIRCLING_RADIUS = 350;
-const RIVA_SPEED = 0.04;
-
-let highScores = [];
-function loadHighScores() {
-  try {
-    let r = JSON.parse(localStorage.getItem('starforce_highscores'));
-    if (Array.isArray(r) && r.length > 0) {
-      highScores = r.map(h => ({ name: h.name || 'AAA', score: Math.min(99999999, h.score || 0), area: h.area || 1 }));
-      return;
-    }
-  } catch (e) {}
-  highScores = JSON.parse(JSON.stringify(DEFAULT_HIGH_SCORES));
-}
-loadHighScores();
-
-function resetHighScores() {
-  highScores = JSON.parse(JSON.stringify(DEFAULT_HIGH_SCORES));
-  try { localStorage.setItem('starforce_highscores', JSON.stringify(highScores)); } catch (e) {}
-}
-
-class PRNG {
-  constructor(s) { this.seed = s % 2147483647; if (this.seed <= 0) this.seed += 2147483646; }
-  next() { return this.seed = this.seed * 16807 % 2147483647; }
-  nextFloat() { return (this.next() - 1) / 2147483646; }
-}
-
-function drawPoly(c, p, col, o = null) {
-  c.beginPath(); c.moveTo(p[0][0], p[0][1]);
-  for (let i = 1; i < p.length; i++) c.lineTo(p[i][0], p[i][1]);
-  c.closePath(); c.fillStyle = col; c.fill();
-  if (o) { c.fillStyle = o; c.fill(); }
-}
-
-function drawBevel(c, tx, ty, tw, th, bc) {
-  let bw = 6;
-  drawPoly(c, [[tx, ty], [tx + tw, ty], [tx + tw - bw, ty + bw], [tx + bw, ty + bw]], bc, 'rgba(255,255,255,0.4)');
-  drawPoly(c, [[tx, ty], [tx + bw, ty + bw], [tx + bw, ty + th - bw], [tx, ty + th]], bc, 'rgba(255,255,255,0.1)');
-  drawPoly(c, [[tx + tw, ty], [tx + tw, ty + th], [tx + tw - bw, ty + th - bw], [tx + tw - bw, ty + bw]], bc, 'rgba(0,0,0,0.3)');
-  drawPoly(c, [[tx, ty + th], [tx + bw, ty + th - bw], [tx + tw - bw, ty + th - bw], [tx + tw, ty + th]], bc, 'rgba(0,0,0,0.6)');
-  drawPoly(c, [[tx + bw, ty + bw], [tx + tw - bw, ty + bw], [tx + tw - bw, ty + th - bw], [tx + bw, ty + th - bw]], bc);
-}
-
-function drawPolyDome(c, tx, ty, r, s, bc) {
-  for (let i = 0; i < s; i++) {
-    let a1 = i * Math.PI * 2 / s - Math.PI / 2, a2 = (i + 1) * Math.PI * 2 / s - Math.PI / 2;
-    let br = -Math.sin((a1 + a2) / 2);
-    let o = br > 0 ? `rgba(255,255,255,${br * 0.5})` : `rgba(0,0,0,${-br * 0.5})`;
-    drawPoly(c, [[tx, ty], [tx + Math.cos(a1) * r, ty + Math.sin(a1) * r], [tx + Math.cos(a2) * r, ty + Math.sin(a2) * r]], bc, o);
-  }
-}
-
-function drawDetailedEnemyShape(c, sh, col, w, h) {
-  c.save();
-  if (sh === 'delta') {
-    drawPoly(c, [[w/2, 0], [w*0.8, h*0.4], [w/2, h*0.3]], col, 'rgba(255,255,255,0.4)');
-    drawPoly(c, [[w/2, 0], [w*0.2, h*0.4], [w/2, h*0.3]], col, 'rgba(255,255,255,0.1)');
-    drawPoly(c, [[w*0.8, h*0.4], [w, h*0.85], [w/2, h*0.65], [w/2, h*0.3]], col, 'rgba(0,0,0,0.2)');
-    drawPoly(c, [[w*0.2, h*0.4], [0, h*0.85], [w/2, h*0.65], [w/2, h*0.3]], col, 'rgba(0,0,0,0.4)');
-    drawPoly(c, [[w/2, h*0.65], [w*0.65, h*0.85], [w/2, h], [w*0.35, h*0.85]], col, 'rgba(255,255,255,0.2)');
-  } else if (sh === 'stealth') {
-    drawPoly(c, [[w/2, 0], [w*0.7, h*0.3], [w/2, h*0.5]], col, 'rgba(255,255,255,0.5)');
-    drawPoly(c, [[w/2, 0], [w*0.3, h*0.3], [w/2, h*0.5]], col, 'rgba(255,255,255,0.2)');
-    drawPoly(c, [[w*0.7, h*0.3], [w, h*0.2], [w*0.85, h*0.8], [w/2, h*0.5]], col, 'rgba(0,0,0,0.2)');
-    drawPoly(c, [[w*0.3, h*0.3], [0, h*0.2], [w*0.15, h*0.8], [w/2, h*0.5]], col, 'rgba(0,0,0,0.4)');
-    drawPoly(c, [[w/2, h*0.5], [w*0.7, h*0.8], [w/2, h], [w*0.3, h*0.8]], '#fff', 'rgba(0,0,0,0.3)');
-  } else if (sh === 'arrow') {
-    drawPoly(c, [[w*0.3, 0], [w/2, h*0.3], [0, h*0.6]], col, 'rgba(255,255,255,0.4)');
-    drawPoly(c, [[w*0.7, 0], [w, h*0.6], [w/2, h*0.3]], col, 'rgba(0,0,0,0.2)');
-    drawPoly(c, [[w/2, h*0.3], [w*0.8, h*0.6], [w*0.6, h], [w*0.4, h], [w*0.2, h*0.6]], col, 'rgba(255,255,255,0.1)');
-  } else if (sh === 'heavy') {
-    drawPoly(c, [[w*0.2, 0], [w*0.8, 0], [w, h*0.3], [w, h*0.7], [w*0.8, h], [w*0.2, h], [0, h*0.7], [0, h*0.3]], col);
-    drawPoly(c, [[w*0.2, 0], [w*0.8, 0], [w/2, h*0.4]], col, 'rgba(255,255,255,0.4)');
-    drawPoly(c, [[0, h*0.3], [w*0.2, 0], [w/2, h*0.4], [0, h*0.7]], col, 'rgba(255,255,255,0.1)');
-    drawPoly(c, [[w, h*0.3], [w*0.8, 0], [w/2, h*0.4], [w, h*0.7]], col, 'rgba(0,0,0,0.3)');
-    drawPoly(c, [[0, h*0.7], [w/2, h*0.4], [w, h*0.7], [w*0.8, h], [w*0.2, h]], col, 'rgba(0,0,0,0.5)');
-  } else if (sh === 'cruiser') {
-    drawPoly(c, [[w/2, 0], [w*0.85, h*0.2], [w*0.85, h*0.8], [w/2, h]], col, 'rgba(255,255,255,0.3)');
-    drawPoly(c, [[w/2, 0], [w*0.15, h*0.2], [w*0.15, h*0.8], [w/2, h]], col, 'rgba(0,0,0,0.3)');
-    drawPoly(c, [[0, h*0.3], [w*0.15, h*0.2], [w*0.15, h*0.8], [0, h*0.7]], col, 'rgba(255,255,255,0.2)');
-    drawPoly(c, [[w, h*0.3], [w*0.85, h*0.2], [w*0.85, h*0.8], [w, h*0.7]], col, 'rgba(0,0,0,0.5)');
-  } else if (sh === 'crescent') { 
-    drawPolyDome(c, w/2, h/2, w*0.35, 12, col);
-    drawPoly(c, [[w*0.1, h*0.2], [w*0.4, h*0.4], [w*0.2, h*0.8]], col, 'rgba(255,255,255,0.3)');
-    drawPoly(c, [[w*0.9, h*0.2], [w*0.6, h*0.4], [w*0.8, h*0.8]], col, 'rgba(0,0,0,0.4)');
-    c.strokeStyle = '#ffffff'; c.lineWidth = 2; c.beginPath(); c.arc(w/2, h/2, w*0.2, 0, Math.PI*2); c.stroke();
-  } else if (sh === 'scout') { 
-    drawPoly(c, [[w/2, 0], [w, h*0.5], [w*0.7, h*0.9], [w/2, h*0.6]], col, 'rgba(255,255,255,0.4)');
-    drawPoly(c, [[w/2, 0], [0, h*0.5], [w*0.3, h*0.9], [w/2, h*0.6]], col, 'rgba(0,0,0,0.4)');
-    drawPolyDome(c, w/2, h*0.4, w*0.18, 8, '#ffffff');
-  } else if (sh === 'dagger') { 
-    drawPoly(c, [[w/2, 0], [w*0.7, h*0.7], [w/2, h]], col, 'rgba(255,255,255,0.45)');
-    drawPoly(c, [[w/2, 0], [w*0.3, h*0.7], [w/2, h]], col, 'rgba(0,0,0,0.45)');
-    drawPoly(c, [[w*0.3, h*0.7], [0, h*0.9], [w/2, h*0.85]], col, 'rgba(255,255,255,0.2)');
-    drawPoly(c, [[w*0.7, h*0.7], [w, h*0.9], [w/2, h*0.85]], col, 'rgba(0,0,0,0.6)');
-  } else if (sh === 'saucer') { 
-    drawPolyDome(c, w/2, h/2, w*0.45, 16, col); drawPolyDome(c, w/2, h/2, w*0.25, 12, '#ffffff');
-    c.strokeStyle = '#00ffff'; c.lineWidth = 2; c.beginPath(); c.ellipse(w/2, h/2, w*0.4, h*0.15, 0, 0, Math.PI*2); c.stroke();
-  } else if (sh === 'sphere') {
-    drawPolyDome(c, w/2, h/2, w/2, 12, col); c.strokeStyle = '#fff'; c.lineWidth = 2;
-    c.beginPath(); c.ellipse(w/2, h/2, w*0.6, h*0.2, Math.PI/4, 0, Math.PI*2); c.stroke();
-  } else if (sh === 'star') {
-    for (let i = 0; i < 6; i++) {
-      let a1 = i * Math.PI / 3, a2 = (i + 1) * Math.PI / 3, o = (i > 2 && i < 5) ? 'rgba(0,0,0,0.4)' : (i < 2 ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0)');
-      drawPoly(c, [[w / 2, h / 2], [w / 2 + Math.cos(a1) * w / 2, h / 2 + Math.sin(a1) * w / 2], [w / 2 + Math.cos(a2) * w / 2, h / 2 + Math.sin(a2) * w / 2]], col, o);
-    }
-  } else if (sh === 'mine') {
-    for (let i = 0; i < 8; i++) {
-      let a1 = i * Math.PI / 4, a2 = (i + 1) * Math.PI / 4, o = (i > 3 && i < 7) ? 'rgba(0,0,0,0.4)' : (i < 3 ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0)');
-      drawPoly(c, [[w / 2, h / 2], [w / 2 + Math.cos(a1) * w * 0.4, h / 2 + Math.sin(a1) * w * 0.4], [w / 2 + Math.cos(a2) * w * 0.4, h / 2 + Math.sin(a2) * w * 0.4]], col, o);
-    }
-  } else if (sh === 'carrier') {
-    drawPoly(c, [[w / 2, h / 2], [w * 0.2, 0], [w * 0.8, 0]], col, 'rgba(255,255,255,0.3)');
-    drawPoly(c, [[w / 2, h / 2], [0, h / 2], [w * 0.2, 0]], col, 'rgba(255,255,255,0.1)');
-    drawPoly(c, [[w / 2, h / 2], [w, h / 2], [w * 0.8, 0]], col, 'rgba(0,0,0,0.2)');
-    drawPoly(c, [[w / 2, h / 2], [0, h / 2], [w / 2, h]], col, 'rgba(0,0,0,0.3)');
-    drawPoly(c, [[w / 2, h / 2], [w, h / 2], [w / 2, h]], col, 'rgba(0,0,0,0.5)');
-  }
-  c.restore();
-}
 
 // ==========================================
-// 3. エンジンクラス群 (Sound, Starfield, Effects)
-// ==========================================
-class SoundEngine {
-  constructor() { this.ctx = null; this.bgmPhase = 'STOP'; this.bgmStep = 0; this.bgmFrameCount = 0; this.audioEnabled = false; this.noiseBuffer = null; }
-  init() { try { if (!this.ctx) { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); const bSize = this.ctx.sampleRate * 2; this.noiseBuffer = this.ctx.createBuffer(1, bSize, this.ctx.sampleRate); const data = this.noiseBuffer.getChannelData(0); for (let i = 0; i < bSize; i++) data[i] = Math.random() * 2 - 1; } if (this.ctx.state === 'suspended') this.ctx.resume(); this.audioEnabled = true; } catch (e) {} }
-  playTone(f, t, d, v = 0.1) { if (!this.audioEnabled || !this.ctx) return; try { const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime); g.gain.setValueAtTime(0, this.ctx.currentTime); g.gain.linearRampToValueAtTime(v, this.ctx.currentTime + 0.01); g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + d); o.connect(g); g.connect(this.ctx.destination); o.start(this.ctx.currentTime); o.stop(this.ctx.currentTime + d); } catch (e) {} }
-  playNoise(d, v = 0.2) { if (!this.audioEnabled || !this.ctx || !this.noiseBuffer) return; try { const n = this.ctx.createBufferSource(); n.buffer = this.noiseBuffer; const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(800, this.ctx.currentTime); f.frequency.linearRampToValueAtTime(100, this.ctx.currentTime + d); const g = this.ctx.createGain(); g.gain.setValueAtTime(v, this.ctx.currentTime); g.gain.linearRampToValueAtTime(0, this.ctx.currentTime + d); n.connect(f); f.connect(g); g.connect(this.ctx.destination); n.start(this.ctx.currentTime); n.stop(this.ctx.currentTime + d); } catch (e) {} }
-  playLaser() { this.playTone(1400, 'sawtooth', 0.08, 0.04); } playEnemyLaser() { this.playTone(1800, 'square', 0.1, 0.02); } playHit() { this.playNoise(0.1, 0.08); } playExplosion() { this.playNoise(0.3, 0.3); }
-  playHiddenAppear() { this.playTone(1046, 'sine', 0.08, 0.15); setTimeout(() => this.playTone(2093, 'sine', 0.15, 0.2), 60); } playHiddenDestroy() { [1318, 1567, 2093, 2637].forEach((f, i) => { setTimeout(() => this.playTone(f, 'triangle', 0.12, 0.2), i * 40); }); }
-  playStart() { [880, 1760].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.1, 0.1), i * 100)); } playBonus() { [523, 659, 784, 1046, 1318].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.1, 0.15), i * 60)); } playSecretBonus() { [440, 554, 659, 880, 1108, 1318, 1760].forEach((f, i) => setTimeout(() => this.playTone(f, 'sawtooth', 0.15, 0.15), i * 80)); }
-  playExtend() { [523, 659, 784, 1046, 1318, 1567, 2093].forEach((f, i) => setTimeout(() => this.playTone(f, 'triangle', 0.15, 0.2), i * 70)); }
-  playAreaClear() { [523, 659, 784, 1046, 1567].forEach((f, i) => setTimeout(() => this.playTone(f, 'square', 0.2, 0.2), i * 120)); } playCleopatraBonus() { [440, 554, 659, 880, 1108, 1318, 1760, 2217, 2637].forEach((f, i) => setTimeout(() => this.playTone(f, 'sawtooth', 0.2, 0.2), i * 100)); }
-  tickBGM(s, f) { if (!this.audioEnabled || s === 'GAMEOVER' || s === 'INTERVAL' || s === 'NAME_ENTRY' || s === 'SELECT_DEVICE' || s === 'PAUSE') { this.bgmPhase = 'STOP'; return; } if (s === 'PLAYING' && f < 300) { if (this.bgmPhase !== 'INTRO') { this.bgmPhase = 'INTRO'; this.bgmStep = 0; } if (f % 12 === 0) { const i = [440, 587, 659, 880, 659, 880, 1174, 1318]; if (this.bgmStep % 16 < i.length) this.playTone(i[this.bgmStep % 16], 'square', 0.15, 0.1); this.bgmStep++; } } else if (s === 'PLAYING' || s === 'BOSS_PHASE') { if (this.bgmPhase !== 'LOOP') { this.bgmPhase = 'LOOP'; this.bgmStep = 0; this.bgmFrameCount = 0; } this.bgmFrameCount++; if (this.bgmFrameCount % (s === 'BOSS_PHASE' ? 4 : 6) === 0) { const b = [110, 164, 220, 164, 146, 220, 293, 220], l = [440, 0, 659, 0, 587, 0, 880, 0, 440, 0, 659, 0, 587, 880, 1174, 1318]; const st = this.bgmStep % 16, pu = s === 'BOSS_PHASE' ? 1.5 : 1.0; this.playTone(b[st % 8] * pu, 'sawtooth', 0.1, 0.05); if (l[st] > 0) this.playTone(l[st] * pu, 'square', 0.1, 0.04); this.bgmStep++; } } }
-}
-const audio = new SoundEngine();
-
-class Starfield {
-  constructor() { this.stars = []; const c = ['#ffffff', '#aaffff', '#ffccff', '#ccffff', '#88bbff', '#ff88cc']; for (let i = 0; i < 120; i++) { this.stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, s: 0.3 + Math.random() * 4.5, c: c[Math.floor(Math.random() * c.length)], sz: Math.random() > 0.85 ? 3.0 : (Math.random() > 0.5 ? 2.0 : 1.0), a: 0.1 + Math.random() * 0.9 }); } this.nebulae = [{ x: 100, y: 150, r: 180, c: 'rgba(20,40,90,0.25)' }, { x: 380, y: 400, r: 220, c: 'rgba(60,20,80,0.2)' }, { x: 200, y: 550, r: 160, c: 'rgba(0,60,90,0.18)' }]; }
-  update(sm = 1.0) { this.stars.forEach(s => { s.y += s.s * sm; if (s.y > canvas.height) { s.y = -10; s.x = Math.random() * canvas.width; } }); this.nebulae.forEach(n => { n.y += 0.3 * sm; if (n.y - n.r > canvas.height) { n.y = -n.r; n.x = Math.random() * canvas.width; } }); }
-  draw() { ctx.shadowBlur = 0; this.nebulae.forEach(n => { let g = ctx.createRadialGradient(n.x, n.y, 10, n.x, n.y, n.r); g.addColorStop(0, n.c); g.addColorStop(1, 'transparent'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill(); }); this.stars.forEach(s => { ctx.globalAlpha = s.a; ctx.fillStyle = s.c; ctx.beginPath(); ctx.arc(s.x, s.y, s.sz / 2, 0, Math.PI * 2); ctx.fill(); }); ctx.globalAlpha = 1.0; }
-}
-
-class Item {
-  constructor(x, y, t) { this.x = x; this.y = y; this.width = 32; this.height = 32; this.type = t; this.lifeTime = 0; this.toRemove = false; this.startX = x; }
-  update() { this.lifeTime++; this.y += 1.5; this.x = this.startX + Math.sin(this.lifeTime * 0.05) * 40; if (this.y > canvas.height + 50) this.toRemove = true; }
-  draw() { ctx.save(); ctx.translate(this.x, this.y); ctx.shadowBlur = 15; ctx.shadowColor = '#00ffff'; drawPoly(ctx, [[16, 0], [32, 16], [16, 32], [0, 16]], '#00ffff', 'rgba(255,255,255,0.8)'); drawPoly(ctx, [[16, 4], [28, 16], [16, 28], [4, 16]], '#0055ff'); ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px "Segoe UI"'; ctx.textAlign = 'center'; ctx.fillText('P', 16, 23); ctx.restore(); }
-}
-
-class Bullet {
-  constructor(x, y) { this.x = x; this.y = y; this.width = 4; this.height = 18; this.speed = 18; this.toRemove = false; }
-  update() { this.y -= this.speed; if (this.y < -20) this.toRemove = true; }
-  draw() { ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = '#00ffff'; ctx.fillStyle = '#ffffff'; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(this.x, this.y, this.width, this.height, 2); else ctx.fillRect(this.x, this.y, this.width, this.height); ctx.fill(); ctx.restore(); }
-}
-
-class EnemyBullet {
-  constructor(x, y, targetX, targetY, sm = 1.0) { 
-    this.x = isNaN(x) ? 0 : x; this.y = isNaN(y) ? 0 : y; this.width = 8; this.height = 8; this.toRemove = false; 
-    let a = Math.atan2(targetY - y, targetX - x); 
-    this.speedMult = isNaN(sm) ? 1.0 : sm; 
-    this.baseVx = isNaN(a) ? 0 : Math.cos(a) * 5; 
-    this.baseVy = isNaN(a) ? 5 : Math.sin(a) * 5; 
-    this.isLaser = false; 
-  }
-  update() { this.x += this.baseVx * this.speedMult; this.y += this.baseVy * this.speedMult; if (this.y > canvas.height + 50 || this.y < -50 || this.x < -50 || this.x > canvas.width + 50) this.toRemove = true; }
-  draw() { if (isNaN(this.x) || isNaN(this.y)) return; ctx.save(); if (this.isLaser) { ctx.shadowBlur = 15; ctx.shadowColor = '#00ffff'; ctx.fillStyle = '#ffffff'; ctx.fillRect(this.x, this.y - 10, 4, 20); } else { ctx.shadowBlur = 15; ctx.shadowColor = '#ff0044'; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI * 2); ctx.fill(); } ctx.restore(); }
-}
-
-class Explosion {
-  constructor(x, y, c = '#ff8800', il = false) { this.x = x; this.y = y; this.radius = 2; this.maxRadius = il ? 80 : 25; this.color = c || '#ffffff'; this.dead = false; this.speed = il ? 4 : 2; }
-  update() { this.radius += this.speed; if (this.radius > this.maxRadius) this.dead = true; }
-  draw() { try { if (isNaN(this.x) || isNaN(this.y)) return; let a = Math.max(0, Math.min(1, 1 - (this.radius / this.maxRadius))); if (isNaN(a)) a = 0; ctx.save(); ctx.globalAlpha = a; ctx.shadowBlur = 20; ctx.shadowColor = this.color; ctx.strokeStyle = this.color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke(); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius * 0.3, 0, Math.PI * 2); ctx.fill(); ctx.restore(); } catch (e) {} }
-}
-
-class Debris {
-  constructor(x, y, c, ml) { this.x = x; this.y = y; let a = Math.random() * Math.PI * 2; let s = Math.random() * 4 + 1; this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s; this.color = c; this.maxLife = ml; this.life = ml; this.size = Math.random() * 4 + 2; this.rotation = Math.random() * Math.PI * 2; this.rotSpeed = (Math.random() - 0.5) * 0.5; this.dead = false; }
-  update() { this.x += this.vx; this.y += this.vy; this.rotation += this.rotSpeed; this.life--; if (this.life <= 0) this.dead = true; }
-  draw() { if (isNaN(this.x) || isNaN(this.y)) return; ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rotation); ctx.globalAlpha = Math.max(0, this.life / this.maxLife); ctx.fillStyle = this.color; ctx.beginPath(); ctx.moveTo(0, -this.size); ctx.lineTo(this.size, this.size); ctx.lineTo(-this.size, this.size); ctx.closePath(); ctx.fill(); ctx.restore(); }
-}
-function spawnDebris(x, y, c, ct, l) { for (let i = 0; i < ct; i++) debrisList.push(new Debris(x, y, c, l)); }
-
-// ==========================================
-// 4. ゲームエンティティ (Enemy, Larios, AreaBoss, Map, Player)
+// 6. ゲームエンティティ (Enemy クラス)
 // ==========================================
 class Enemy {
   constructor(x, y, t, o = {}) {
@@ -1913,7 +2644,7 @@ class Enemy {
     this.hp = (t === 'GIRARD') ? 8 : (this.def.hp || 1); this.score = this.def.score || 100;
     this.isWeak = o.weak || false; this.isFast = o.fast || false;
     let sh = this.def.shape;
-    this.width = (sh === 'carrier' || t === 'GUILER') ? 64 : (sh === 'heavy' || t === 'PATARTA' ? 36 : (sh === 'star' ? 16 : 28)); this.height = this.width;
+    this.width = (sh === 'carrier' || t === 'GUILER') ? 64 : (sh === 'heavy' || t === 'PATARTA' || t === 'SULTAN' || t === 'GADOHA' || t === 'AMARA' || t === 'TOPPER' ? 36 : (sh === 'star' ? 16 : 28)); this.height = this.width;
     
     let effArea = isLooped ? 10 : Math.min(10, areaLevel);
     let bfm = effArea >= 5 ? Math.max(0.4, 1.0 - (effArea - 4) * 0.1) : 1.0;
@@ -2068,7 +2799,6 @@ class Enemy {
       ctx.shadowBlur = 15; 
       ctx.shadowColor = c; 
       
-      // ★ 敵キャラ3D/スタイリッシュ描画分岐 (PATARTA 3Dを新規組み込み)
       if (this.type === 'GALLI') {
         draw3DGalli(ctx, this.width, this.height, c, -this.lifeTime * 0.05);
       } else if (this.type === 'TITTA') {
@@ -2097,6 +2827,18 @@ class Enemy {
         draw3DSplitta(ctx, this.width, this.height, c, -this.lifeTime * 0.03);
       } else if (this.type === 'PATARTA') {
         draw3DPatarta(ctx, this.width, this.height, c);
+      } else if (this.type === 'SULTAN') {
+        draw3DSultan(ctx, this.width, this.height, c);
+      } else if (this.type === 'GADOHA') {
+        draw3DGadoha(ctx, this.width, this.height, -this.lifeTime * 0.03);
+      } else if (this.type === 'AMARA') {
+        draw3DAmara(ctx, this.width, this.height, -this.lifeTime * 0.04);
+      } else if (this.type === 'TOPPER') {
+        draw3DTopper(ctx, this.width, this.height);
+      } else if (this.type === 'SUPER_SONIC') {
+        draw2D3DStyleSuperSonic(ctx, this.width, this.height);
+      } else if (this.type === 'GUILER') {
+        draw2D3DStyleGuiler(ctx, this.width, this.height);
       } else {
         drawDetailedEnemyShape(ctx, this.def.shape || 'delta', c, this.width, this.height); 
       }
@@ -2104,13 +2846,30 @@ class Enemy {
     } catch (e) {} 
   }
 }
-
+// ==========================================
+// 7. ゲームエンティティ (Larios, AreaBoss, GroundMap, Player)
+// ==========================================
 class Larios {
-  constructor() { this.x = canvas.width / 2 - 32; this.y = 100; this.width = 64; this.height = 64; this.hp = 8; this.isAssembled = false; this.assembleTimer = 120; this.partsOffset = 80; this.toRemove = false; }
+  constructor() { 
+    this.x = canvas.width / 2 - 32; 
+    this.y = 100; 
+    this.width = 64; 
+    this.height = 64; 
+    this.hp = 8; 
+    this.isAssembled = false; 
+    this.assembleTimer = 120; 
+    this.partsOffset = 80; 
+    this.toRemove = false; 
+  }
+  
   update() { 
     if (!this.isAssembled) { 
-      this.assembleTimer--; this.partsOffset = (this.assembleTimer / 120) * 80; 
-      if (this.assembleTimer <= 0) { this.isAssembled = true; this.partsOffset = 0; } 
+      this.assembleTimer--; 
+      this.partsOffset = (this.assembleTimer / 120) * 80; 
+      if (this.assembleTimer <= 0) { 
+        this.isAssembled = true; 
+        this.partsOffset = 0; 
+      } 
     } else { 
       this.y += 0.8; 
       if (this.y > canvas.height + 50) this.toRemove = true; 
@@ -2120,7 +2879,13 @@ class Larios {
       } 
     } 
   }
-  draw() { ctx.save(); ctx.translate(this.x + 32, this.y + 32); const po = this.partsOffset, cCore = this.isAssembled ? '#ff0055' : '#ffff00'; ctx.shadowBlur = 25; ctx.shadowColor = cCore; ctx.rotate(gameFrames * 0.02); const dp = (dx, dy, rot) => { ctx.save(); ctx.translate(dx, dy); ctx.rotate(rot); drawPoly(ctx, [[0, -15], [15, 0], [0, 0]], '#aaaaaa', 'rgba(255,255,255,0.4)'); drawPoly(ctx, [[0, -15], [-15, 0], [0, 0]], '#aaaaaa', 'rgba(255,255,255,0.1)'); drawPoly(ctx, [[0, 15], [15, 0], [0, 0]], '#aaaaaa', 'rgba(0,0,0,0.3)'); drawPoly(ctx, [[0, 15], [-15, 0], [0, 0]], '#aaaaaa', 'rgba(0,0,0,0.6)'); ctx.restore(); }; dp(-25 - po, -25 - po, 0); dp(25 + po, -25 - po, Math.PI / 2); dp(25 + po, 25 + po, Math.PI); dp(-25 - po, 25 + po, -Math.PI / 2); drawPolyDome(ctx, 0, 0, 14, 12, cCore); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+  
+  draw() { 
+    ctx.save(); 
+    let rotAngle = gameFrames * 0.02;
+    draw2D3DStyleLariosParts(ctx, this.x + 32, this.y + 32, this.partsOffset, this.isAssembled, rotAngle);
+    ctx.restore(); 
+  }
 }
 
 class AreaBoss {
@@ -2129,7 +2894,11 @@ class AreaBoss {
     this.x = canvas.width / 2 - this.width / 2; 
     this.y = -120; 
     this.hp = 30 + (areaLevel * 20); this.maxHp = this.hp; 
-    this.state = 'ENTER'; this.toRemove = false; this.shotTimer = 0; this.bossType = areaLevel % 3; 
+    this.state = 'ENTER'; this.toRemove = false; this.shotTimer = 0;
+    this.bossType = (areaLevel - 1) % 8; 
+    
+    let themeIndex = (areaLevel - 1) % AREA_THEME_COLORS.length;
+    this.themeColor = AREA_THEME_COLORS[themeIndex].bossTheme || '#00ffff';
     
     let lastDigit = Math.floor(Math.abs(score)) % 10;
     this.vx = (lastDigit % 2 !== 0) ? -2.5 : 2.5;
@@ -2159,51 +2928,169 @@ class AreaBoss {
         this.vx *= -1;
       }
       
-      this.shotTimer--; 
-      if (this.shotTimer <= 0 && player && !player.isDestroyed && enemyBullets.length < 13) { 
-        let cx = this.x + this.width / 2, cy = this.y + this.height - 10, d = Math.min(areaLevel, 5); 
-        for (let i = 0; i < 3 + d; i++) { 
-          enemyBullets.push(new EnemyBullet(cx - 40 + Math.random() * 80, cy, player.x + 16, player.y + 20, 1.0 + Math.random() * 1.0)); 
-        } 
-        if (Math.random() > 0.5) { 
-          let eb = new EnemyBullet(cx, cy, cx, canvas.height); 
-          eb.speedMult = 3.0; eb.isLaser = true; 
-          enemyBullets.push(eb); audio.playEnemyLaser(); 
-        } 
+this.shotTimer--; 
+      if (this.shotTimer <= 0 && player && !player.isDestroyed && enemyBullets.length < 18) { 
+        let cx = this.x + this.width / 2, cy = this.y + this.height - 10;
+        let spdBase = 1.0 + Math.min(areaLevel * 0.08, 1.2);
+        
+        // 自機への基本角度（扇形弾幕用）
+        let angleToPlayer = Math.atan2(player.y - cy, player.x + 16 - cx);
+
+        switch (this.bossType) {
+          case 0: // Fortress Dome (自機狙い5WAY散弾 ＋ 直下レーザー)
+            for (let i = -2; i <= 2; i++) {
+              let ang = angleToPlayer + (i * 0.15);
+              let tx = cx + Math.cos(ang) * 200;
+              let ty = cy + Math.sin(ang) * 200;
+              enemyBullets.push(new EnemyBullet(cx, cy, tx, ty, spdBase));
+            }
+            if (Math.random() > 0.4) {
+              let eb = new EnemyBullet(cx, cy, cx, canvas.height);
+              eb.speedMult = 3.5; eb.isLaser = true;
+              enemyBullets.push(eb); audio.playEnemyLaser();
+            }
+            break;
+            
+          case 1: // Heavy Cruiser (前方〜下方向扇形8WAY拡散弾)
+            // 自機方向を中心に下方120度の範囲へ展開
+            for (let i = -3; i <= 3; i++) {
+              let ang = angleToPlayer + (i * 0.18);
+              let tx = cx + Math.cos(ang) * 200;
+              let ty = cy + Math.sin(ang) * 200;
+              enemyBullets.push(new EnemyBullet(cx, cy, tx, ty, spdBase * 0.95));
+            }
+            break;
+
+          case 2: // Diamond Citadel (自機狙い高速3連交差弾)
+            [-25, 0, 25].forEach(offX => {
+              enemyBullets.push(new EnemyBullet(cx + offX, cy, player.x + 16, player.y + 20, spdBase * 1.2));
+            });
+            break;
+
+          case 3: // Cross Carrier (左右直下レーザー ＋ 自機追尾3WAY)
+            let ebL = new EnemyBullet(cx - 50, cy, cx - 50, canvas.height); ebL.speedMult = 3.0; ebL.isLaser = true;
+            let ebR = new EnemyBullet(cx + 50, cy, cx + 50, canvas.height); ebR.speedMult = 3.0; ebR.isLaser = true;
+            enemyBullets.push(ebL, ebR); audio.playEnemyLaser();
+            
+            [-0.2, 0, 0.2].forEach(angOff => {
+              let ang = angleToPlayer + angOff;
+              enemyBullets.push(new EnemyBullet(cx, cy, cx + Math.cos(ang) * 200, cy + Math.sin(ang) * 200, spdBase * 0.9));
+            });
+            break;
+
+          case 4: // Twin-Core Spider (左右2連コアから自機へ挟み込み弾)
+            [-35, 35].forEach(offX => {
+              let ang = Math.atan2(player.y - cy, (player.x + 16) - (cx + offX));
+              for (let i = -1; i <= 1; i++) {
+                let a = ang + (i * 0.12);
+                enemyBullets.push(new EnemyBullet(cx + offX, cy, cx + offX + Math.cos(a) * 200, cy + Math.sin(a) * 200, spdBase));
+              }
+            });
+            break;
+
+          case 5: // Trident Dreadnought (超高速3方向自機集中V字弾)
+            [-0.25, 0, 0.25].forEach(radOff => {
+              let baseAng = angleToPlayer + radOff;
+              let tx = cx + Math.cos(baseAng) * 200;
+              let ty = cy + Math.sin(baseAng) * 200;
+              enemyBullets.push(new EnemyBullet(cx, cy, tx, ty, spdBase * 1.4));
+            });
+            break;
+
+          case 6: // Solar Ring Gate (自機方向メインの下半球ワイド放射弾)
+            for (let i = -4; i <= 4; i++) {
+              let ang = (Math.PI / 2) + (i * 0.25); // 下方向基準のワイド展開
+              enemyBullets.push(new EnemyBullet(cx, cy, cx + Math.cos(ang) * 200, cy + Math.sin(ang) * 200, spdBase * 0.85));
+            }
+            break;
+
+          case 7: // Hexa-Shield Command (自機追い込み型・連続6連射)
+            for (let i = 0; i < 6; i++) {
+              setTimeout(() => {
+                if (areaBoss && player && !player.isDestroyed) {
+                  let curAng = Math.atan2(player.y - cy, player.x + 16 - cx);
+                  enemyBullets.push(new EnemyBullet(cx, cy, cx + Math.cos(curAng) * 200, cy + Math.sin(curAng) * 200, spdBase * 1.15));
+                }
+              }, i * 70);
+            }
+            break;
+        }
+
         let effArea = isLooped ? 10 : Math.min(10, areaLevel);
-        this.shotTimer = Math.floor(Math.max(30, 80 - effArea * 10) / fireModifier); 
-      } 
+        this.shotTimer = Math.floor(Math.max(25, 75 - effArea * 8) / fireModifier); 
+      }
     } 
   }
   
   draw() { 
-    ctx.save(); ctx.translate(this.x, this.y); let d = Math.max(0, 1 - (this.hp / this.maxHp)), cx = this.width / 2; 
-    ctx.shadowBlur = 30; ctx.shadowColor = `rgba(${Math.floor(d * 255)},${Math.floor(100 - d * 50)},${Math.floor(255 - d * 155)},1)`; 
-    let cc = (d > 0.7 && Math.floor(Date.now() / 100) % 2 === 0) ? '#ffffff' : '#ff0000'; 
-    if (this.bossType === 0) { 
-      drawPolyDome(ctx, cx, 50, 75, 16, '#003388'); drawPolyDome(ctx, cx, 50, 40, 12, '#0055cc'); 
-      drawPolyDome(ctx, cx, 50, 20, 8, cc); 
-      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, 50, 6, 0, Math.PI * 2); ctx.fill(); 
-    } else if (this.bossType === 1) { 
-      drawPoly(ctx, [[30, 0], [130, 0], [160, 50], [100, 100], [60, 100], [0, 50]], '#441122'); 
-      drawPoly(ctx, [[30, 0], [130, 0], [100, 30], [60, 30]], '#441122', 'rgba(255,255,255,0.3)'); 
-      drawPoly(ctx, [[0, 50], [30, 0], [60, 30], [30, 50]], '#441122', 'rgba(255,255,255,0.1)'); 
-      drawPoly(ctx, [[160, 50], [130, 0], [100, 30], [130, 50]], '#441122', 'rgba(0,0,0,0.3)'); 
-      drawPoly(ctx, [[0, 50], [60, 100], [80, 70], [30, 50]], '#441122', 'rgba(0,0,0,0.4)'); 
-      drawPoly(ctx, [[160, 50], [100, 100], [80, 70], [130, 50]], '#441122', 'rgba(0,0,0,0.6)'); 
-      drawPoly(ctx, [[60, 100], [100, 100], [80, 70]], '#441122', 'rgba(0,0,0,0.8)'); 
-      drawPoly(ctx, [[60, 30], [100, 30], [130, 50], [80, 70], [30, 50]], '#661133'); 
-      drawPolyDome(ctx, cx, 50, 20, 8, cc); 
-      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, 50, 8, 0, Math.PI * 2); ctx.fill(); 
-      drawBevel(ctx, 30, 40, 20, 30, '#333333'); drawBevel(ctx, 110, 40, 20, 30, '#333333'); 
-    } else { 
-      drawPoly(ctx, [[cx, 0], [140, 50], [cx, 100], [20, 50]], '#004422'); 
-      drawPoly(ctx, [[cx, 0], [140, 50], [cx, 40]], '#004422', 'rgba(255,255,255,0.3)'); 
-      drawPoly(ctx, [[cx, 0], [20, 50], [cx, 40]], '#004422', 'rgba(255,255,255,0.1)'); 
-      drawPoly(ctx, [[cx, 100], [140, 50], [cx, 40]], '#004422', 'rgba(0,0,0,0.5)'); 
-      drawPoly(ctx, [[cx, 100], [20, 50], [cx, 40]], '#004422', 'rgba(0,0,0,0.3)'); 
-      drawPolyDome(ctx, cx, 50, 18, 6, cc); 
-    } 
+    ctx.save(); ctx.translate(this.x, this.y); 
+    let d = Math.max(0, 1 - (this.hp / this.maxHp)), cx = this.width / 2; 
+    let tc = this.themeColor;
+    ctx.shadowBlur = 30; ctx.shadowColor = tc; 
+    let cc = (d > 0.7 && Math.floor(Date.now() / 100) % 2 === 0) ? '#ffffff' : tc; 
+
+    // エリアボスの8形態別描画
+    switch (this.bossType) {
+      case 0: // Fortress Dome (ドーム要塞)
+        drawPolyDome(ctx, cx, 50, 75, 16, '#003388'); 
+        drawPolyDome(ctx, cx, 50, 40, 12, tc); 
+        drawPolyDome(ctx, cx, 50, 20, 8, cc); 
+        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, 50, 6, 0, Math.PI * 2); ctx.fill(); 
+        break;
+
+      case 1: // Heavy Cruiser (重装多角艇)
+        drawPoly(ctx, [[30, 0], [130, 0], [160, 50], [100, 100], [60, 100], [0, 50]], '#441122'); 
+        drawPoly(ctx, [[30, 0], [130, 0], [100, 30], [60, 30]], '#441122', 'rgba(255,255,255,0.3)'); 
+        drawPoly(ctx, [[60, 30], [100, 30], [130, 50], [80, 70], [30, 50]], tc); 
+        drawPolyDome(ctx, cx, 50, 20, 8, cc); 
+        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, 50, 8, 0, Math.PI * 2); ctx.fill(); 
+        drawBevel(ctx, 30, 40, 20, 30, '#333333'); drawBevel(ctx, 110, 40, 20, 30, '#333333'); 
+        break;
+
+      case 2: // Diamond Citadel (菱形機動要塞)
+        drawPoly(ctx, [[cx, 0], [140, 50], [cx, 100], [20, 50]], '#004422'); 
+        drawPoly(ctx, [[cx, 0], [140, 50], [cx, 40]], '#004422', 'rgba(255,255,255,0.3)'); 
+        drawPoly(ctx, [[cx, 100], [140, 50], [cx, 40]], tc, 'rgba(0,0,0,0.5)'); 
+        drawPolyDome(ctx, cx, 50, 18, 6, cc); 
+        break;
+
+      case 3: // Cross Carrier (十字巨大空母)
+        drawBevel(ctx, 20, 35, 120, 30, '#112233');
+        drawBevel(ctx, 65, 10, 30, 80, '#1a3344');
+        drawPolyDome(ctx, cx - 40, 50, 15, 8, tc);
+        drawPolyDome(ctx, cx + 40, 50, 15, 8, tc);
+        drawPolyDome(ctx, cx, 50, 22, 10, cc);
+        break;
+
+      case 4: // Twin-Core Spider (双核多脚型要塞)
+        drawPoly(ctx, [[10, 10], [150, 10], [130, 90], [30, 90]], '#331100');
+        drawPoly(ctx, [[0, 50], [30, 10], [30, 90]], tc);
+        drawPoly(ctx, [[160, 50], [130, 10], [130, 90]], tc);
+        drawPolyDome(ctx, cx - 35, 50, 18, 8, cc);
+        drawPolyDome(ctx, cx + 35, 50, 18, 8, cc);
+        break;
+
+      case 5: // Trident Dreadnought (三叉突撃戦艦)
+        drawPoly(ctx, [[cx, 100], [160, 20], [120, 0], [cx, 30], [40, 0], [0, 20]], '#222244');
+        drawPoly(ctx, [[cx, 100], [120, 0], [cx, 40]], tc);
+        drawPoly(ctx, [[cx, 100], [40, 0], [cx, 40]], tc);
+        drawPolyDome(ctx, cx, 35, 20, 8, cc);
+        break;
+
+      case 6: // Solar Ring Gate (円環状エネルギー要塞)
+        drawPolyDome(ctx, cx, 50, 70, 12, '#110033');
+        drawPolyDome(ctx, cx, 50, 48, 12, tc);
+        drawPolyDome(ctx, cx, 50, 28, 8, '#000000');
+        drawPolyDome(ctx, cx, 50, 16, 8, cc);
+        break;
+
+      case 7: // Hexa-Shield Command (六角バリア司令艦)
+        drawPoly(ctx, [[40, 0], [120, 0], [160, 50], [120, 100], [40, 100], [0, 50]], '#003322');
+        drawPoly(ctx, [[50, 15], [110, 15], [140, 50], [110, 85], [50, 85], [20, 50]], tc);
+        drawPolyDome(ctx, cx, 50, 24, 6, cc);
+        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, 50, 8, 0, Math.PI * 2); ctx.fill();
+        break;
+    }
     ctx.restore(); 
   }
 }
@@ -2361,7 +3248,7 @@ class Player {
 }
 
 // ==========================================
-// 5. 操作・イベントハンドラー
+// 8. 操作・イベントハンドラー ＆ ロジック関数
 // ==========================================
 function getTouchPos(e) {
   let r = canvas.getBoundingClientRect(); let cx = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX; let cy = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
@@ -2407,9 +3294,23 @@ window.addEventListener("keydown", e => {
 });
 window.addEventListener("keyup", e => keys[e.code] = false);
 
-// ==========================================
-// 6. メインロジック
-// ==========================================
+function loadHighScores() {
+  try {
+    let r = JSON.parse(localStorage.getItem('starforce_highscores'));
+    if (Array.isArray(r) && r.length > 0) {
+      highScores = r.map(h => ({ name: h.name || 'AAA', score: Math.min(99999999, h.score || 0), area: h.area || 1 }));
+      return;
+    }
+  } catch (e) {}
+  highScores = JSON.parse(JSON.stringify(DEFAULT_HIGH_SCORES));
+}
+loadHighScores();
+
+function resetHighScores() {
+  highScores = JSON.parse(JSON.stringify(DEFAULT_HIGH_SCORES));
+  try { localStorage.setItem('starforce_highscores', JSON.stringify(highScores)); } catch (e) {}
+}
+
 function startGame() {
   gameState = 'PLAYING'; gameFrames = 0; areaFrames = 0; areaLevel = 1; score = 0;
   B_destroyed = 0; b_destroyed = 0; bonusMessage = ""; hiddenDestroyedThisArea = 0; spawnModifier = 1.0; fireModifier = 1.0; sequenceIndex = 0; isLooped = false; lariosSpawnedThisArea = false;
@@ -2644,7 +3545,9 @@ function checkCollisions() {
     if (areaBoss && areaBoss.state === 'COMBAT' && px >= areaBoss.x && px <= areaBoss.x + areaBoss.width && py >= areaBoss.y && py <= areaBoss.y + areaBoss.height) handlePlayerHit();
   }
 }
-
+// ==========================================
+// 9. 画面描画 ＆ タイトルデモ関数
+// ==========================================
 function drawDemoEnemyGraphic(sh, c, x, y) {
   ctx.save(); ctx.translate(x, y); ctx.shadowBlur = 20; ctx.shadowColor = c;
   if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('GALLI')) {
@@ -2703,16 +3606,42 @@ function drawDemoEnemyGraphic(sh, c, x, y) {
     draw3DPatarta(ctx, 50, 50, c);
     ctx.restore();
     return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('SULTAN')) {
+    draw3DSultan(ctx, 50, 50, c);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('GADOHA')) {
+    draw3DGadoha(ctx, 50, 50, -gameFrames * 0.03);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('AMARA')) {
+    draw3DAmara(ctx, 50, 50, -gameFrames * 0.04);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('TOPPER')) {
+    draw3DTopper(ctx, 50, 50);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('SUPER SONIC') || ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('Sソニック')) {
+    draw2D3DStyleSuperSonic(ctx, 50, 50);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('GUILER') || ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('ガイラ')) {
+    draw2D3DStyleGuiler(ctx, 50, 50);
+    ctx.restore();
+    return;
+  } else if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('LARIOS') || ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('ラリオス')) {
+    let demoCycle = gameFrames % 240;
+    let partsOffset = (demoCycle < 120) ? (1 - demoCycle / 120) * 80 : (demoCycle < 180 ? 0 : ((demoCycle - 180) / 60) * 80);
+    let isAssembled = (partsOffset === 0);
+    draw2D3DStyleLariosParts(ctx, 25, 25, partsOffset, isAssembled, gameFrames * 0.02);
+    ctx.restore();
+    return;
   }
-  const customShapes = ['larios', 'boss', 'bigorra', 'target_T', 'radar_demo', 'secret_S', 'jimda', 'bonus_B', 'bonus_b', 'hidden'];
+  const customShapes = ['boss', 'bigorra', 'target_T', 'radar_demo', 'secret_S', 'jimda', 'bonus_B', 'bonus_b', 'hidden'];
   if (customShapes.includes(sh)) {
     ctx.translate(25, 25);
-    if (sh === 'larios') {
-      ctx.rotate(gameFrames * 0.02);
-      const dp = (dx, dy, rot) => { ctx.save(); ctx.translate(dx, dy); ctx.rotate(rot); drawPoly(ctx, [[0, -15], [15, 0], [0, 0]], '#aaaaaa', 'rgba(255,255,255,0.4)'); drawPoly(ctx, [[0, -15], [-15, 0], [0, 0]], '#aaaaaa', 'rgba(255,255,255,0.1)'); drawPoly(ctx, [[0, 15], [15, 0], [0, 0]], '#aaaaaa', 'rgba(0,0,0,0.3)'); drawPoly(ctx, [[0, 15], [-15, 0], [0, 0]], '#aaaaaa', 'rgba(0,0,0,0.6)'); ctx.restore(); };
-      dp(-25, -25, 0); dp(25, -25, Math.PI / 2); dp(25, 25, Math.PI); dp(-25, 25, -Math.PI / 2);
-      drawPolyDome(ctx, 0, 0, 14, 12, '#ff0055'); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill();
-    } else if (sh === 'boss') { drawPolyDome(ctx, 0, 0, 55, 16, '#003388'); drawPolyDome(ctx, 0, 0, 25, 8, '#ff0000'); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
+    if (sh === 'boss') { drawPolyDome(ctx, 0, 0, 55, 16, '#003388'); drawPolyDome(ctx, 0, 0, 25, 8, '#ff0000'); ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
     } else if (sh === 'bigorra') { drawBevel(ctx, -40, -40, 80, 80, '#1e2832'); drawPolyDome(ctx, 0, 0, 28, 12, '#004455'); ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2; ctx.strokeRect(-28, -28, 56, 56); ctx.fillStyle = '#00ffff'; ctx.font = 'bold 42px "Segoe UI"'; ctx.textAlign = 'center'; ctx.fillText('A', 0, 15);
     } else if (sh === 'target_T') { drawBevel(ctx, -24, -24, 48, 48, '#2a1005'); drawPolyDome(ctx, 0, 0, 16, 8, '#ffaa00'); ctx.fillStyle = '#ffffff'; ctx.font = 'bold 24px "Segoe UI"'; ctx.textAlign = 'center'; ctx.fillText('T', 0, 8);
     } else if (sh === 'radar_demo') { drawPolyDome(ctx, 0, 0, 24, 12, '#002244'); ctx.rotate(gameFrames * 0.05); ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(18, 0); ctx.stroke(); ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
@@ -2744,6 +3673,9 @@ function drawMiniPlayerIcon(x, y) {
   ctx.restore();
 }
 
+// ==========================================
+// 10. メインゲームループ
+// ==========================================
 function gameLoop() {
   try {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2839,11 +3771,16 @@ function gameLoop() {
       if (player) player.update();
       if (iaea) spawnWaveFromSequence();
       
-      bullets.forEach(b => b.update()); enemyBullets.forEach(eb => eb.update()); enemies.forEach(e => e.update()); items.forEach(i => i.update());
+      bullets.forEach(b => b.update()); 
+      enemyBullets.forEach(eb => eb.update()); 
+      enemies.forEach(e => e.update()); 
+      items.forEach(i => i.update());
+      debrisList.forEach(d => d.update());
       
       if (lariosBoss) { lariosBoss.update(); if (lariosBoss.toRemove) lariosBoss = null; }
       if (areaBoss) areaBoss.update();
-      explosions.forEach(ex => ex.update()); debrisList.forEach(d => d.update()); checkCollisions();
+      explosions.forEach(ex => ex.update()); 
+      checkCollisions();
       
       if (gameState === 'INTERVAL') {
         intervalTimer--;
@@ -2859,15 +3796,26 @@ function gameLoop() {
         }
       }
       
-      bullets = bullets.filter(b => !b.toRemove); enemyBullets = enemyBullets.filter(eb => !eb.toRemove); enemies = enemies.filter(e => !e.toRemove);
-      explosions = explosions.filter(ex => !ex.dead); debrisList = debrisList.filter(d => !d.dead); items = items.filter(i => !i.toRemove);
+      bullets = bullets.filter(b => !b.toRemove); 
+      enemyBullets = enemyBullets.filter(eb => !eb.toRemove); 
+      enemies = enemies.filter(e => !e.toRemove);
+      explosions = explosions.filter(ex => !ex.dead); 
+      debrisList = debrisList.filter(d => !d.dead);
+      items = items.filter(i => !i.toRemove);
     }
     
-    starfield.draw(); if (map) map.draw(); debrisList.forEach(d => d.draw()); explosions.forEach(ex => ex.draw()); items.forEach(i => i.draw()); enemies.forEach(e => e.draw());
-    if (lariosBoss) lariosBoss.draw(); if (areaBoss) areaBoss.draw(); bullets.forEach(b => b.draw()); enemyBullets.forEach(eb => eb.draw());
+    starfield.draw(); 
+    if (map) map.draw(); 
+    debrisList.forEach(d => d.draw()); 
+    explosions.forEach(ex => ex.draw()); 
+    items.forEach(i => i.draw()); 
+    enemies.forEach(e => e.draw());
+    if (lariosBoss) lariosBoss.draw(); 
+    if (areaBoss) areaBoss.draw(); 
+    bullets.forEach(b => b.draw()); 
+    enemyBullets.forEach(eb => eb.draw());
     if (player && gameState !== 'GAMEOVER' && gameState !== 'NAME_ENTRY' && gameState !== 'SELECT_DEVICE') player.draw();
     
-    // UIスコア・エリア表示
     ctx.shadowBlur = 0; ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px "Segoe UI"'; ctx.textAlign = 'left'; ctx.fillText("SCORE " + score.toString().padStart(8, "0"), 15, 35);
     ctx.fillStyle = '#00ffff'; ctx.font = 'bold 16px "Segoe UI"'; ctx.textAlign = 'right'; let aNm = GREEK_ALPHABETS[(areaLevel - 1) % 24] || 'UNKNOWN'; ctx.fillText(aNm + " " + areaLevel, canvas.width - 15, 35); ctx.textAlign = 'left';
     
@@ -2875,7 +3823,6 @@ function gameLoop() {
     if (player && player.isInvincible) { ctx.fillStyle = '#ff00ff'; ctx.font = 'bold 15px "Segoe UI"'; ctx.fillText("INVINCIBLE MODE", 15, 80); }
     if (spawnModifier < 1.0) { ctx.shadowBlur = 10; ctx.shadowColor = '#00ffaa'; ctx.fillStyle = '#00ffaa'; ctx.font = 'bold 15px "Segoe UI"'; let dp = Math.round((1 - spawnModifier) * 100); let dy = (player && player.isPoweredUp) ? 80 : 60; if (player && player.isInvincible) dy += 20; ctx.fillText(`THREAT LEVEL -${dp}%`, 15, dy); ctx.shadowBlur = 0; }
     
-    // 残機アイコン描画（左下）
     if (gameState === 'PLAYING' || gameState === 'BOSS_PHASE') {
       let iconStartX = 20, iconY = canvas.height - 30;
       for (let i = 0; i < lives; i++) {
@@ -2883,13 +3830,11 @@ function gameLoop() {
       }
     }
 
-    // モバイル時ポーズボタン（右下）
     if (controlMode === 'MOBILE' && (gameState === 'PLAYING' || gameState === 'BOSS_PHASE')) {
       ctx.fillStyle = "rgba(255, 255, 255, 0.2)"; ctx.beginPath(); ctx.arc(canvas.width - 40, canvas.height - 40, 25, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "rgba(255, 255, 255, 0.8)"; ctx.fillRect(canvas.width - 48, canvas.height - 50, 6, 20); ctx.fillRect(canvas.width - 36, canvas.height - 50, 6, 20);
     }
 
-    // 1UPスライドアニメーション表示
     if (extendAnimState !== 'OFF') {
       if (!isPaused) {
         let centerX = canvas.width / 2;
@@ -2934,7 +3879,7 @@ function gameLoop() {
 }
 
 // ==========================================
-// 8. 初期化とゲームループ開始
+// 11. 初期化とゲームループスタート
 // ==========================================
 map = new GroundMap();
 starfield = new Starfield();
