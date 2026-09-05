@@ -200,7 +200,6 @@ function draw2D3DStyleSuperSonic(c, w, h) {
   c.restore();
   c.restore();
 }
-
 // ★ ガイラ（GUILER）擬似3D描画関数
 function draw2D3DStyleGuiler(c, w, h) {
   c.save();
@@ -879,7 +878,6 @@ function draw3DGadoha(c, w, h, rotZAnim) {
   });
   c.restore();
 }
-
 // ★ アマラ（AMARA）3Dデータ ＆ 描画関数
 function createCompleteAmara3DMesh() {
   let vertices = [];
@@ -1009,7 +1007,6 @@ function draw3DTopper(c, w, h) {
     return pts;
   }
 
-  // A. 正八角形外枠 (シルバーグラデーション)
   let outerPts = getOctagonPt(r);
   c.beginPath();
   c.moveTo(outerPts[0].x, outerPts[0].y);
@@ -1027,7 +1024,6 @@ function draw3DTopper(c, w, h) {
   c.lineWidth = 1.5;
   c.stroke();
 
-  // B. 多角層リングパネル
   let ringRadii = [r * 0.85, r * 0.65, r * 0.45];
   for (let k = 0; k < ringRadii.length; k++) {
     let rCurr = ringRadii[k];
@@ -1046,7 +1042,6 @@ function draw3DTopper(c, w, h) {
     c.stroke();
   }
 
-  // C. 斜め4方向アーム
   let rCoreEdge = r * 0.25;
   for (let i = 0; i < 4; i++) {
     let aCenter = (i * Math.PI / 2) + Math.PI / 4;
@@ -1074,7 +1069,6 @@ function draw3DTopper(c, w, h) {
     c.stroke();
   }
 
-  // D. 中央正四面体 (ピラミッド) コア (レッド系統)
   let cSize = r * 0.28;
   let coreCorner = [
     { x: 0, y: -cSize },
@@ -1111,6 +1105,7 @@ function draw3DTopper(c, w, h) {
 
   c.restore();
 }
+
 // ★ ロペ（LOPE）3Dデータ ＆ 描画関数
 function create3DLopeCoreAndRingMesh() {
   let vertices = [];
@@ -1232,7 +1227,6 @@ function draw3DLope(c, w, h, baseColor, rotZAnim) {
   });
   c.restore();
 }
-
 // ★ パタータ（PATARTA）3Dデータ ＆ 描画関数
 function createHorizontalPatartaMesh() {
   let vertices = [];
@@ -1758,7 +1752,6 @@ function draw2D3DStyleTitta(c, w, h, baseColor, rotYAnim) {
   c.restore();
 }
 
-// ★ ゾフ（ZOFF）描画
 function draw2D3DStyleZoff(c, w, h, baseColor) {
   c.save();
   c.translate(w / 2, h / 2);
@@ -1821,7 +1814,6 @@ function draw2D3DStyleZoff(c, w, h, baseColor) {
   c.restore();
 }
 
-// ★ フェラー（FAILLAR）描画
 function draw2D3DStyleFaillar(c, w, h, baseColor) {
   c.save();
   c.translate(w / 2, h / 2);
@@ -1901,7 +1893,6 @@ function draw2D3DStyleFaillar(c, w, h, baseColor) {
   c.restore();
 }
 
-// ★ メーウス（MEEUWS）描画
 function draw2D3DStyleMeeuws(c, w, h, baseColor) {
   c.save();
   c.translate(w / 2, h / 2);
@@ -2003,7 +1994,6 @@ function draw2D3DStyleMeeuws(c, w, h, baseColor) {
   c.restore();
 }
 
-// ★ オブセス（OBSESS）描画
 function draw2D3DStyleObsess(c, w, h, baseColor, rotYAnim) {
   c.save();
   c.translate(w / 2, h / 2);
@@ -2085,7 +2075,6 @@ function draw2D3DStyleObsess(c, w, h, baseColor, rotYAnim) {
   c.restore();
 }
 
-// ★ リーバ（RIVA）描画
 function createOctagonPath(c, r) {
   c.beginPath();
   for (let i = 0; i < 8; i++) {
@@ -2177,7 +2166,6 @@ function draw2D3DStyleRiva(c, w, h, baseColor, rotYAnim) {
   c.restore();
 }
 
-// ★ ネイラ（NEIRA）描画
 function drawPolygonPath(c, r, sides) {
   c.beginPath();
   for (let i = 0; i < sides; i++) {
@@ -2373,140 +2361,140 @@ const ENEMY_PATTERNS_DATA = {
     "desc": "戦闘迎撃機。S字蛇行しながら編隊飛行で飛来する。",
     "category": "sine", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 168, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "single_file", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "single_file", "spacing": 28, "interval": 8 }
   },
   "TITTA": {
     "color": "#00e5ff", "hp": 1, "score": 200,
     "desc": "高速戦闘艇。自機直前でUターン反転して上昇する。",
     "category": "turn", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 480, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "ZOFF": {
     "color": "#ff6633", "hp": 1, "score": 100,
     "desc": "戦闘爆撃機。ガリよりも素早く鋭いS字蛇行で迫る。",
     "category": "sine", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.15, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "single_file", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "single_file", "spacing": 28, "interval": 8 }
   },
   "FAILLAR": {
     "color": "#00ff88", "hp": 2, "score": 100,
     "desc": "重爆撃機。一直線に高速急降下して迫る。",
     "category": "dive", "speed": 6,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "MEEUWS": {
     "color": "#ffcc00", "hp": 1, "score": 300,
     "desc": "超磁力式駆逐艦。自機真横で90度直角に折れ曲がる。",
     "category": "turn", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 500, "turnType": "right_angle", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_line", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_line", "spacing": 28, "interval": 8 }
   },
   "OBSESS": {
     "color": "#ff00ff", "hp": 1, "score": 500,
     "desc": "自動追尾機雷。自機を追尾し撃破時に4方向弾。",
     "category": "dive", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "NEIRA": {
     "color": "#00ffcc", "hp": 1, "score": 500,
     "desc": "新式戦闘機。画面中央で大きな円軌道を描く。",
     "category": "sine", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "single_file", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "single_file", "spacing": 28, "interval": 8 }
   },
   "ETTORI": {
     "color": "#aaaaaa", "hp": 1, "score": 100,
     "desc": "旧式無人機。カクカクと階段状に屈折移動する。",
     "category": "pause", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 350, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_line", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_line", "spacing": 28, "interval": 8 }
   },
   "QUIRI": {
     "color": "#ff3333", "hp": 1, "score": 100,
     "desc": "小型機。自機に向かって一直線に突進。",
     "category": "dive", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_line", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_line", "spacing": 28, "interval": 8 }
   },
   "LOPE": {
     "color": "#ffaa00", "hp": 1, "score": 100,
     "desc": "新型無人機。左右にゆらゆら揺れながら下降。",
     "category": "sine", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "single_file", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "single_file", "spacing": 28, "interval": 8 }
   },
   "SPLITTA": {
     "color": "#88ffff", "hp": 2, "score": 500,
     "desc": "反射板機雷。自機へ追尾接近する。",
     "category": "dive", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "GIRARD": {
     "color": "#cc00ff", "hp": 8, "score": 1000,
     "desc": "浮遊機雷。耐久8発。大ゆれでゆっくり下降。",
     "category": "sine", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "PATARTA": {
     "color": "#99ff33", "hp": 2, "score": 200,
     "desc": "重爆撃機。中央で一時停止開砲後退却。",
     "category": "pause", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 400, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "SULTAN": {
     "color": "#ff6699", "hp": 1, "score": 100,
     "desc": "磁力機。画面端で反射しながらジグザグ移動。",
     "category": "turn", "speed": 5,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 482, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "GADOHA": {
     "color": "#33cc99", "hp": 1, "score": 500,
     "desc": "偵察機。中央停止して弾幕放射後、後退。",
     "category": "pause", "speed": 5,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 400, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "AMARA": {
     "color": "#ff3333", "hp": 1, "score": 100,
     "desc": "高速爆撃機。自機手前で鋭角に反転。",
     "category": "dive", "speed": 5,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "TOPPER": {
     "color": "#ffff00", "hp": 4, "score": 1000,
     "desc": "バリア機。ダメージを受けるほど左右の揺れが激化。",
     "category": "sine", "speed": 5,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 150, "frequency": 0.3, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "single_file", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "single_file", "spacing": 28, "interval": 8 }
   },
   "SUPER_SONIC": {
     "color": "#00ffff", "hp": 1, "score": 300,
     "desc": "超高速兵器。超スピードで直線急降下。",
     "category": "dive", "speed": 7,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   },
   "GUILER": {
     "color": "#ff00ff", "hp": 15, "score": 1000,
     "desc": "大型空母。画面下からバックアタック。",
     "category": "sine", "speed": 7,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "single_file", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "single_file", "spacing": 28, "interval": 8 }
   },
   "LARIOS": {
     "color": "#9900ff", "hp": 8, "score": 1000,
     "desc": "合体要塞。パーツ合体前にCore撃破で5万点。",
     "category": "pause", "speed": 3,
     "params": { "swingByStartPos": "top_left", "swingByTriggerY": 400, "swingByCurve": 0.06, "swingByExitType": "return", "startX": 240, "amplitude": 40, "frequency": 0.05, "turnY": 350, "turnType": "u_turn", "pauseType": "stop_and_go", "pauseY": 200, "path": [{"x":80,"y":-20,"label":"P0"},{"x":420,"y":180,"label":"P1"},{"x":60,"y":440,"label":"P2"},{"x":400,"y":660,"label":"P3"}] },
-    "formation": { "count": 6, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
+    "formation": { "count": 5, "layout": "dir_v_shape", "spacing": 28, "interval": 8 }
   }
 };
 
@@ -2521,7 +2509,7 @@ const ENEMY_TYPES = {
   'NEIRA': { color: '#ff00ff', shape: 'saucer', hp: 1, score: 500 },
   'ETTORI': { color: '#aaaaaa', shape: 'arrow', hp: 1, score: 100 },
   'QUIRI': { color: '#ff3333', shape: 'star', hp: 1, score: 100 },
-  'CALDERON': { color: '#4444ff', shape: 'heavy', hp: 3, score: 500 },
+  'CALDERON': { color: '#888888', shape: 'unknown', hp: 3, score: 500 },
   'LOPE': { color: '#ffaa00', shape: 'arrow', hp: 1, score: 100 },
   'SPLITTA': { color: '#88ffff', shape: 'mine', hp: 2, score: 500 },
   'GIRARD': { color: '#cc00ff', shape: 'mine', hp: 8, score: 1000 },
@@ -2545,7 +2533,7 @@ const ENEMY_DEMO_LIST = [
   { name: 'NEIRA (ネイラ)', pts: '500 PTS', desc: '新式戦闘機。画面中央で大きく円軌道を描く。', shape: 'saucer', color: '#ff00ff' },
   { name: 'ETTORI (エトリ)', pts: '100 PTS', desc: '旧式無人戦闘機。直角折れ移動時に一時停止する。', shape: 'arrow', color: '#aaaaaa' },
   { name: 'QUIRI (キリ)', pts: '100 PTS', desc: '小型攻撃機。母艦から発射され一直線に突進。', shape: 'star', color: '#ff3333' },
-  { name: 'CALDERON (カルデロン)', pts: '500 PTS', desc: '捕虜護送艦。倒すとパーサーと合体できる。', shape: 'heavy', color: '#4444ff' },
+  { name: 'CALDERON (カルデロン)', pts: '??? PTS', desc: '詳細データ不明の未確認大型艦。', shape: 'unknown', color: '#888888' },
   { name: 'LOPE (ロペ)', pts: '100 PTS', desc: '新型無人戦闘機。画面端で揺れながら下降。', shape: 'arrow', color: '#ffaa00' },
   { name: 'SPLITTA (スプリッタ)', pts: '500 PTS', desc: '硬度反射板機雷。撃つ度に3回まで分裂する。', shape: 'mine', color: '#88ffff' },
   { name: 'GIRARD (ジラール)', pts: '1000 PTS', desc: '浮遊機雷。耐久8発。爆発時画面全敵誘爆！', shape: 'mine', color: '#cc00ff' },
@@ -2569,49 +2557,49 @@ const ENEMY_DEMO_LIST = [
 ];
 
 const ENEMY_SEQUENCE = [
-  { type: 'GALLI', count: 8, weak: true }, { type: 'TITTA', count: 8, weak: true },
-  { type: 'GALLI', count: 8, weak: true }, { type: 'TITTA', count: 8, weak: true },
-  { type: 'ETTORI', count: 8, weak: true }, { type: 'ETTORI', count: 8 },
-  { type: 'GALLI', count: 8 }, { type: 'GALLI', count: 8 },
-  { type: 'ZOFF', count: 8, weak: true }, { type: 'ZOFF', count: 8, weak: true },
-  { type: 'FAILLAR', count: 8, weak: true },
-  { type: 'LARIOS', count: 1 }, { type: 'MEEUWS', count: 8 },
-  { type: 'ETTORI', count: 8, weak: true }, { type: 'GALLI', count: 8 }, { type: 'GALLI', count: 8 },
-  { type: 'ZOFF', count: 8, weak: true }, { type: 'TITTA', count: 8 },
-  { type: 'ETTORI', count: 8 }, { type: 'ZOFF', count: 8 },
-  { type: 'MEEUWS', count: 8 }, { type: 'OBSESS', count: 8 }, { type: 'OBSESS', count: 8 },
-  { type: 'MEEUWS', count: 8 }, { type: 'RIVA', count: 8 }, { type: 'RIVA', count: 8 },
-  { type: 'LOPE', count: 8 }, { type: 'QUIRI', count: 8 }, { type: 'GIRARD', count: 8 },
-  { type: 'MEEUWS', count: 8 }, { type: 'SPLITTA', count: 1 }, { type: 'GALLI', count: 8 },
-  { type: 'GADOHA', count: 8 }, { type: 'NEIRA', count: 8 }, { type: 'OBSESS', count: 8 },
-  { type: 'FAILLAR', count: 8 },
-  { type: 'LARIOS', count: 1 }, { type: 'ETTORI', count: 8 },
-  { type: 'TITTA', count: 8 }, { type: 'GADOHA', count: 8 }, { type: 'TITTA', count: 8 },
-  { type: 'RIVA', count: 8 }, { type: 'MEEUWS', count: 8 }, { type: 'AMARA', count: 8 },
-  { type: 'QUIRI', count: 8 }, { type: 'PATARTA', count: 8 },
-  { type: 'TOPPER', count: 2 }, { type: 'OBSESS', count: 8 },
-  { type: 'ZOFF', count: 8 }, { type: 'GALLI', count: 8 }, { type: 'RIVA', count: 8 },
-  { type: 'SULTAN', count: 8 }, { type: 'GADOHA', count: 8 }, { type: 'NEIRA', count: 8 },
-  { type: 'FAILLAR', count: 8 },
-  { type: 'LARIOS', count: 1 }, { type: 'ETTORI', count: 8 }, { type: 'MEEUWS', count: 8 },
-  { type: 'OBSESS', count: 8 }, { type: 'GADOHA', count: 8 }, { type: 'TITTA', count: 8 },
-  { type: 'SPLITTA', count: 1 }, { type: 'GIRARD', count: 8 }, { type: 'ETTORI', count: 8 },
-  { type: 'GADOHA', count: 8 }, { type: 'SUPER_SONIC', count: 8 }, { type: 'AMARA', count: 8 },
-  { type: 'RIVA', count: 8 }, { type: 'SUPER_SONIC', count: 8 }, { type: 'QUIRI', count: 8 },
-  { type: 'PATARTA', count: 8 }, { type: 'LOPE', count: 8 }, { type: 'FAILLAR', count: 8 },
-  { type: 'LARIOS', count: 1 }, { type: 'ETTORI', count: 8 }, { type: 'MEEUWS', count: 8 },
-  { type: 'ZOFF', count: 8 }, { type: 'GALLI', count: 8 }, { type: 'RIVA', count: 8 },
-  { type: 'TOPPER', count: 2 }, { type: 'OBSESS', count: 8 }, { type: 'NEIRA', count: 8 },
-  { type: 'MEEUWS', count: 8 }, { type: 'OBSESS', count: 8 }, { type: 'SUPER_SONIC', count: 8 },
-  { type: 'GADOHA', count: 8 }, { type: 'RIVA', count: 8 }, { type: 'SPLITTA', count: 1 },
-  { type: 'SUPER_SONIC', count: 8 }, { type: 'FAILLAR', count: 8, dense: true },
-  { type: 'LARIOS', count: 1 }, { type: 'ETTORI', count: 8 }, { type: 'MEEUWS', count: 8 },
-  { type: 'SUPER_SONIC', count: 8 }, { type: 'GUILER', count: 2 }, { type: 'QUIRI', count: 8 },
-  { type: 'ZOFF', count: 8 }, { type: 'TITTA', count: 8 }, { type: 'SULTAN', count: 8 },
-  { type: 'LOPE', count: 8 }, { type: 'FAILLAR', count: 8 }, { type: 'MEEUWS', count: 8 },
-  { type: 'SULTAN', count: 8 }, { type: 'AMARA', count: 8 }, { type: 'PATARTA', count: 8 },
-  { type: 'NEIRA', count: 8 }, { type: 'SUPER_SONIC', count: 8 }, { type: 'GADOHA', count: 8 },
-  { type: 'GUILER', count: 2 }, { type: 'QUIRI', count: 8 }, { type: 'FAILLAR', count: 8, fast: true }
+  { type: 'GALLI', count: 5, weak: true }, { type: 'TITTA', count: 5, weak: true },
+  { type: 'GALLI', count: 5, weak: true }, { type: 'TITTA', count: 5, weak: true },
+  { type: 'ETTORI', count: 5, weak: true }, { type: 'ETTORI', count: 5 },
+  { type: 'GALLI', count: 5 }, { type: 'GALLI', count: 5 },
+  { type: 'ZOFF', count: 5, weak: true }, { type: 'ZOFF', count: 5, weak: true },
+  { type: 'FAILLAR', count: 5, weak: true },
+  { type: 'LARIOS', count: 1 }, { type: 'MEEUWS', count: 5 },
+  { type: 'ETTORI', count: 5, weak: true }, { type: 'GALLI', count: 5 }, { type: 'GALLI', count: 5 },
+  { type: 'ZOFF', count: 5, weak: true }, { type: 'TITTA', count: 5 },
+  { type: 'ETTORI', count: 5 }, { type: 'ZOFF', count: 5 },
+  { type: 'MEEUWS', count: 5 }, { type: 'OBSESS', count: 5 }, { type: 'OBSESS', count: 5 },
+  { type: 'MEEUWS', count: 5 }, { type: 'RIVA', count: 5 }, { type: 'RIVA', count: 5 },
+  { type: 'LOPE', count: 5 }, { type: 'QUIRI', count: 5 }, { type: 'GIRARD', count: 5 },
+  { type: 'MEEUWS', count: 5 }, { type: 'SPLITTA', count: 1 }, { type: 'GALLI', count: 5 },
+  { type: 'GADOHA', count: 5 }, { type: 'NEIRA', count: 5 }, { type: 'OBSESS', count: 5 },
+  { type: 'FAILLAR', count: 5, mix: true },
+  { type: 'LARIOS', count: 1 }, { type: 'ETTORI', count: 5 },
+  { type: 'TITTA', count: 5 }, { type: 'GADOHA', count: 5 }, { type: 'TITTA', count: 5 },
+  { type: 'RIVA', count: 5 }, { type: 'MEEUWS', count: 5 }, { type: 'AMARA', count: 5 },
+  { type: 'QUIRI', count: 5 }, { type: 'PATARTA', count: 5 },
+  { type: 'TOPPER', count: 2 }, { type: 'OBSESS', count: 5 },
+  { type: 'ZOFF', count: 5 }, { type: 'GALLI', count: 5 }, { type: 'RIVA', count: 5 },
+  { type: 'SULTAN', count: 5 }, { type: 'GADOHA', count: 5 }, { type: 'NEIRA', count: 5 },
+  { type: 'FAILLAR', count: 5, fast: true },
+  { type: 'LARIOS', count: 1 }, { type: 'ETTORI', count: 5 }, { type: 'MEEUWS', count: 5 },
+  { type: 'OBSESS', count: 5 }, { type: 'GADOHA', count: 5 }, { type: 'TITTA', count: 5 },
+  { type: 'SPLITTA', count: 1 }, { type: 'GIRARD', count: 5 }, { type: 'ETTORI', count: 5 },
+  { type: 'GADOHA', count: 5 }, { type: 'SUPER_SONIC', count: 5 }, { type: 'AMARA', count: 5 },
+  { type: 'RIVA', count: 5 }, { type: 'SUPER_SONIC', count: 5 }, { type: 'QUIRI', count: 5 },
+  { type: 'PATARTA', count: 5 }, { type: 'LOPE', count: 5 }, { type: 'FAILLAR', count: 5, mix: true },
+  { type: 'LARIOS', count: 1 }, { type: 'ETTORI', count: 5 }, { type: 'MEEUWS', count: 5 },
+  { type: 'ZOFF', count: 5 }, { type: 'GALLI', count: 5 }, { type: 'RIVA', count: 5 },
+  { type: 'TOPPER', count: 2 }, { type: 'OBSESS', count: 5 }, { type: 'NEIRA', count: 5 },
+  { type: 'MEEUWS', count: 5 }, { type: 'OBSESS', count: 5 }, { type: 'SUPER_SONIC', count: 5 },
+  { type: 'GADOHA', count: 5 }, { type: 'RIVA', count: 5 }, { type: 'SPLITTA', count: 1 },
+  { type: 'SUPER_SONIC', count: 5 }, { type: 'FAILLAR', count: 5, mix: true },
+  { type: 'LARIOS', count: 1 }, { type: 'ETTORI', count: 5 }, { type: 'MEEUWS', count: 5 },
+  { type: 'SUPER_SONIC', count: 5 }, { type: 'GUILER', count: 2 }, { type: 'QUIRI', count: 5 },
+  { type: 'ZOFF', count: 5 }, { type: 'TITTA', count: 5 }, { type: 'SULTAN', count: 5 },
+  { type: 'LOPE', count: 5 }, { type: 'FAILLAR', count: 5, fast: true }, { type: 'MEEUWS', count: 5 },
+  { type: 'SULTAN', count: 5 }, { type: 'AMARA', count: 5 }, { type: 'PATARTA', count: 5 },
+  { type: 'NEIRA', count: 5 }, { type: 'SUPER_SONIC', count: 5 }, { type: 'GADOHA', count: 5 },
+  { type: 'GUILER', count: 2 }, { type: 'QUIRI', count: 5 }, { type: 'FAILLAR', count: 5, fast: true }
 ];
 
 const CUSTOM_MAP_PATTERNS = {
@@ -2632,7 +2620,6 @@ const CUSTOM_MAP_PATTERNS = {
     "map": ["000000000000","111111111111","111111111111","111111111111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111111111111","111111111111","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","111111111111","111111111111","11SSSSSSSS11","11SSSSSSSS11","111111111111","111111111111","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","111111111111","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","111111111111","111111111111","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","000000000000"]
   }
 };
-
 // ==========================================
 // 6. ゲームエンティティ (Enemy クラス)
 // ==========================================
@@ -2642,7 +2629,7 @@ class Enemy {
     this.def = ENEMY_TYPES[t] || ENEMY_TYPES['GALLI'];
     this.pat = ENEMY_PATTERNS_DATA[t] || ENEMY_PATTERNS_DATA['GALLI'];
     this.hp = (t === 'GIRARD') ? 8 : (this.def.hp || 1); this.score = this.def.score || 100;
-    this.isWeak = o.weak || false; this.isFast = o.fast || false;
+    this.isWeak = o.weak || false; this.isFast = o.fast || false; this.isMix = o.mix || false;
     let sh = this.def.shape;
     this.width = (sh === 'carrier' || t === 'GUILER') ? 64 : (sh === 'heavy' || t === 'PATARTA' || t === 'SULTAN' || t === 'GADOHA' || t === 'AMARA' || t === 'TOPPER' ? 36 : (sh === 'star' ? 16 : 28)); this.height = this.width;
     
@@ -2666,7 +2653,7 @@ class Enemy {
       this.lifeTime++;
       let effArea = isLooped ? 10 : Math.min(10, areaLevel);
       let baseSpeed = this.pat.speed || 3;
-      let spd = (baseSpeed / 3.0) * (1.0 + (effArea >= 5 ? (effArea - 4) * 0.05 : 0)) * (this.isFast ? 2.0 : 1.0);
+      let spd = (baseSpeed / 3.0) * (1.0 + (effArea >= 5 ? (effArea - 4) * 0.05 : 0));
       let cat = this.pat.category;
       let p = this.pat.params || {};
 
@@ -2675,9 +2662,9 @@ class Enemy {
         this.x = this.startX + Math.sin(this.lifeTime * 0.04 + this.formationOffset) * 50;
         
         let normalEnemiesCount = enemies.filter(e => e.type !== 'GUILER').length;
-        if (this.lifeTime % 30 === 0 && this.y > 80 && this.y < canvas.height - 80 && normalEnemiesCount < 16) {
+        if (this.lifeTime % 30 === 0 && this.y > 80 && this.y < canvas.height - 80 && normalEnemiesCount < 10) {
           let currentQuiri = enemies.filter(e => e.type === 'QUIRI').length;
-          if (currentQuiri < 8) {
+          if (currentQuiri < 5) {
             enemies.push(new Enemy(this.x + 24, this.y, 'QUIRI'));
           }
         }
@@ -2706,28 +2693,70 @@ class Enemy {
         this.y += 2.5 * spd;
         this.x = this.startX + Math.sin(this.lifeTime * freq + this.formationOffset) * amp;
       } 
+      // ★★★ 【TITTA (ティッタ) のN字急反転軌道】ここから ★★★
       else if (cat === 'turn') {
-        let turnY = p.turnY || 480;
-        let turnType = p.turnType || "u_turn";
-        if (this.state === 'enter') {
-          this.y += 3.5 * spd;
-          if (this.y >= turnY) {
-            this.state = 'turn';
-            if (turnType === 'right_angle') {
-              this.vx = (this.x < canvas.width / 2) ? 4.5 * spd : -4.5 * spd;
-            } else {
-              this.vx = (player && this.x < player.x) ? 3.0 * spd : -3.0 * spd;
+        let spdBase = spd;
+        let targetX = player ? player.x + 16 : canvas.width / 2;
+        let targetY = player ? player.y : canvas.height - 80;
+
+        if (this.type === 'TITTA') {
+          if (this.state === 'enter') {
+            this.y += 5.0 * spdBase;
+
+            if (this.y >= targetY - 60) {
+              this.state = 'sharp_turn';
+
+              let turnTargetX = (this.x < canvas.width / 2) ? targetX + 120 : targetX - 120;
+              let turnTargetY = targetY - 260;
+              let dx = turnTargetX - (this.x + this.width / 2);
+              let dy = turnTargetY - (this.y + this.height / 2);
+              let len = Math.hypot(dx, dy) || 1;
+
+              this.vx = (dx / len) * 7.5 * spdBase;
+              this.vy = (dy / len) * 7.5 * spdBase;
+
+              if (player && !player.isDestroyed && enemyBullets.length < 10) {
+                enemyBullets.push(new EnemyBullet(this.x + this.width / 2, this.y + this.height / 2, player.x + 16, player.y + 20));
+                audio.playEnemyLaser();
+              }
             }
+          } 
+          else if (this.state === 'sharp_turn') {
+            this.x += this.vx;
+            this.y += this.vy;
+
+            if (this.y <= targetY - 260) {
+              this.state = 'front_dive';
+            }
+          } 
+          else if (this.state === 'front_dive') {
+            this.x += (targetX - (this.x + this.width / 2)) * 0.08;
+            this.y += 8.0 * spdBase;
           }
         } else {
-          if (turnType === 'right_angle') {
-            this.x += this.vx;
+          let turnY = p.turnY || 480;
+          let turnType = p.turnType || "u_turn";
+          if (this.state === 'enter') {
+            this.y += 3.5 * spdBase;
+            if (this.y >= turnY) {
+              this.state = 'turn';
+              if (turnType === 'right_angle') {
+                this.vx = (this.x < canvas.width / 2) ? 4.5 * spdBase : -4.5 * spdBase;
+              } else {
+                this.vx = (player && this.x < player.x) ? 3.0 * spdBase : -3.0 * spdBase;
+              }
+            }
           } else {
-            this.x += this.vx;
-            this.y -= 2.5 * spd;
+            if (turnType === 'right_angle') {
+              this.x += this.vx;
+            } else {
+              this.x += this.vx;
+              this.y -= 2.5 * spdBase;
+            }
           }
         }
       } 
+      // ★★★ 【TITTA (ティッタ) のN字急反転軌道】ここまで ★★★
       else if (cat === 'pause') {
         let pauseY = p.pauseY || 200;
         if (this.state === 'enter') {
@@ -2743,15 +2772,34 @@ class Enemy {
           this.y += 3.0 * spd;
         }
       }
+      // ★★★ 【FAILLAR (フェラー) の軌道・速度制御】ここから ★★★
       else if (cat === 'dive') {
-        if (this.lifeTime === 1 && player) {
-          let a = Math.atan2(player.y - this.y, player.x - this.x);
-          this.vx = Math.cos(a) * 6.5 * spd;
-          this.vy = Math.sin(a) * 6.5 * spd;
+        let spdBase = spd;
+
+        if (this.type === 'FAILLAR') {
+          if (this.isFast) {
+            spdBase *= 1.7;
+          } else if (this.isMix) {
+            spdBase *= (Math.random() < 0.5 ? 0.9 : 1.7);
+          } else {
+            spdBase *= 0.9;
+          }
+          
+          this.vx = 0;
+          this.vy = 5.0 * spdBase;
+        } 
+        else {
+          if (this.lifeTime === 1 && player) {
+            let a = Math.atan2(player.y - this.y, player.x - this.x);
+            this.vx = Math.cos(a) * 6.5 * spdBase;
+            this.vy = Math.sin(a) * 6.5 * spdBase;
+          }
         }
+
         this.x += this.vx || 0;
-        this.y += this.vy || (6.5 * spd);
+        this.y += this.vy || (6.5 * spdBase);
       }
+      // ★★★ 【FAILLAR (フェラー) の軌道・速度制御】ここまで ★★★
       else if (cat === 'special' && p.path && p.path.length > 0) {
         let t = (this.lifeTime * 0.01) % p.path.length;
         let idx = Math.floor(t);
@@ -2773,7 +2821,7 @@ class Enemy {
 
       let isInScreen = (this.x >= 0 && this.x + this.width <= canvas.width && this.y >= 0 && this.y + this.height <= canvas.height);
 
-      if (!this.isWeak && player && !isNaN(player.x) && !isNaN(player.y) && enemyBullets.length < 15 && !player.isDestroyed) {
+      if (!this.isWeak && player && !isNaN(player.x) && !isNaN(player.y) && enemyBullets.length < 10 && !player.isDestroyed) {
         if (!(gameState === 'PLAYING' && areaFrames >= 3900)) {
           this.shotTimer--;
           if (this.shotTimer <= 0 && isInScreen) {
@@ -2847,6 +2895,265 @@ class Enemy {
   }
 }
 // ==========================================
+// 自機（ファイナルスター疑似3D）描画関数
+// ==========================================
+function draw2D3DStylePlayer(c, w, h, isPoweredUp, isInvincible) {
+  c.save();
+  c.translate(w / 2, h / 2);
+
+  let r = w / 2;
+  let redMain = '#ff0033';
+  let redDark = '#aa0022';
+  let blueAccent = isPoweredUp ? '#00ffff' : '#0055e6';
+  let blueDark = isPoweredUp ? '#0088cc' : '#002288';
+  let coreColor = isPoweredUp ? '#00ffff' : '#0055ff';
+
+  if (isInvincible) {
+    c.globalAlpha = 0.4 + Math.sin(Date.now() / 30) * 0.4;
+  }
+
+  // 1. ツインバーニアノズル（お尻部分）
+  c.save();
+  let drawNozzle = (nx, ny, nRad) => {
+    c.beginPath();
+    c.moveTo(nx - nRad, ny - nRad * 0.5);
+    c.lineTo(nx + nRad, ny - nRad * 0.5);
+    c.lineTo(nx + nRad * 1.15, ny + nRad * 0.6);
+    c.lineTo(nx - nRad * 1.15, ny + nRad * 0.6);
+    c.closePath();
+
+    let nGrad = c.createLinearGradient(nx - nRad, 0, nx + nRad, 0);
+    nGrad.addColorStop(0, '#708090');
+    nGrad.addColorStop(0.3, '#ffffff');
+    nGrad.addColorStop(0.7, '#a0b0c0');
+    nGrad.addColorStop(1, '#303840');
+
+    c.fillStyle = nGrad;
+    c.fill();
+    c.strokeStyle = '#ffffff';
+    c.lineWidth = 0.8;
+    c.stroke();
+
+    c.beginPath();
+    c.ellipse(nx, ny + nRad * 0.6, nRad * 1.15, nRad * 0.35, 0, 0, Math.PI * 2);
+    c.fillStyle = '#0a0d14';
+    c.fill();
+    c.strokeStyle = isPoweredUp ? '#00ffff' : 'rgba(255, 255, 255, 0.8)';
+    c.lineWidth = 0.8;
+    c.stroke();
+
+    c.beginPath();
+    c.ellipse(nx, ny + nRad * 0.6, nRad * 0.5, nRad * 0.15, 0, 0, Math.PI * 2);
+    c.fillStyle = isPoweredUp ? '#00aaaa' : '#334455';
+    c.fill();
+  };
+
+  drawNozzle(-r * 0.15, r * 0.72, r * 0.12);
+  drawNozzle(r * 0.15, r * 0.72, r * 0.12);
+
+  if (isPoweredUp) {
+    drawNozzle(0, r * 0.82, r * 0.18);
+  }
+  c.restore();
+
+  // 2. 主翼ベース（後退ウイング構造・翼端まで隙間なく結合）
+  c.save();
+  c.beginPath();
+  c.moveTo(-r * 0.25, -r * 0.2);
+  c.lineTo(r * 0.25, -r * 0.2);
+  c.lineTo(r * 0.95, r * 0.18);
+  c.lineTo(r * 0.78, r * 0.68);
+  c.lineTo(r * 0.25, r * 0.45);
+  c.lineTo(-r * 0.25, r * 0.45);
+  c.lineTo(-r * 0.78, r * 0.68);
+  c.lineTo(-r * 0.95, r * 0.18);
+  c.closePath();
+
+  let wingGrad = c.createLinearGradient(-r, 0, r, 0);
+  wingGrad.addColorStop(0, '#90a0b0');
+  wingGrad.addColorStop(0.3, '#ffffff');
+  wingGrad.addColorStop(0.7, '#ffffff');
+  wingGrad.addColorStop(1, '#708090');
+
+  c.fillStyle = wingGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(200, 220, 240, 0.9)';
+  c.lineWidth = 1.0;
+  c.stroke();
+  c.restore();
+
+  // 3. 翼上の幾何学ブルーパターン
+  c.save();
+  [-1, 1].forEach(side => {
+    c.beginPath();
+    c.moveTo(side * r * 0.25, -r * 0.15);
+    c.lineTo(side * r * 0.88, r * 0.2);
+    c.lineTo(side * r * 0.75, r * 0.6);
+    c.lineTo(side * r * 0.25, r * 0.35);
+    c.closePath();
+
+    let bGrad = c.createLinearGradient(side * r * 0.25, 0, side * r * 0.88, 0);
+    bGrad.addColorStop(0, '#ffffff');
+    bGrad.addColorStop(0.35, blueAccent);
+    bGrad.addColorStop(1, blueDark);
+
+    c.fillStyle = bGrad;
+    c.fill();
+    c.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    c.lineWidth = 0.8;
+    c.stroke();
+  });
+  c.restore();
+
+  // 4. 翼端一体化ガンポッド＆先端レッドブロック
+  c.save();
+  [-1, 1].forEach(side => {
+    c.beginPath();
+    let podX = side < 0 ? -r * 0.96 : r * 0.82;
+    c.rect(podX, -r * 0.25, r * 0.14, r * 0.95);
+    let podGrad = c.createLinearGradient(podX, 0, podX + r * 0.14, 0);
+    podGrad.addColorStop(0, '#ffffff');
+    podGrad.addColorStop(0.5, '#708090');
+    podGrad.addColorStop(1, '#202830');
+    c.fillStyle = podGrad;
+    c.fill();
+    c.strokeStyle = '#ffffff';
+    c.lineWidth = 0.8;
+    c.stroke();
+
+    c.beginPath();
+    c.rect(podX - (side < 0 ? r * 0.02 : 0), -r * 0.25, r * 0.16, r * 0.2);
+    c.fillStyle = redMain;
+    c.fill();
+    c.strokeStyle = '#ffffff';
+    c.stroke();
+
+    c.beginPath();
+    c.rect(podX - (side < 0 ? r * 0.02 : 0), r * 0.5, r * 0.16, r * 0.2);
+    c.fillStyle = redMain;
+    c.fill();
+    c.strokeStyle = '#ffffff';
+    c.stroke();
+
+    if (isPoweredUp) {
+      c.beginPath();
+      c.rect(side * r * 0.92 - (side < 0 ? r * 0.08 : 0), -r * 0.55, r * 0.08, r * 0.3);
+      c.fillStyle = '#00ffff';
+      c.shadowBlur = 10;
+      c.shadowColor = '#00ffff';
+      c.fill();
+      c.shadowBlur = 0;
+    }
+  });
+  c.restore();
+
+  // 5. センター機体（フラット台形ノーズ）
+  c.save();
+  c.beginPath();
+  c.moveTo(-r * 0.22, -r * 1.0);
+  c.lineTo(r * 0.22, -r * 1.0);
+  c.lineTo(r * 0.32, -r * 0.1);
+  c.lineTo(r * 0.25, r * 0.72);
+  c.lineTo(-r * 0.25, r * 0.72);
+  c.lineTo(-r * 0.32, -r * 0.1);
+  c.closePath();
+
+  let bodyGrad = c.createLinearGradient(-r * 0.32, 0, r * 0.32, 0);
+  bodyGrad.addColorStop(0, '#b8c8d8');
+  bodyGrad.addColorStop(0.25, '#ffffff');
+  bodyGrad.addColorStop(0.75, '#ffffff');
+  bodyGrad.addColorStop(1, '#788898');
+
+  c.fillStyle = bodyGrad;
+  c.fill();
+  c.strokeStyle = '#ffffff';
+  c.lineWidth = 1.0;
+  c.stroke();
+
+  c.fillStyle = '#101824';
+  c.fillRect(-r * 0.15, -r * 0.95, r * 0.3, r * 0.12);
+  c.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  c.strokeRect(-r * 0.15, -r * 0.95, r * 0.3, r * 0.12);
+  c.restore();
+
+  // 6. 赤いV字型メカアーマー
+  c.save();
+  c.beginPath();
+  c.moveTo(0, -r * 0.42);
+  c.lineTo(r * 0.48, r * 0.2);
+  c.lineTo(r * 0.32, r * 0.5);
+  c.lineTo(0, r * 0.05);
+  c.lineTo(-r * 0.32, r * 0.5);
+  c.lineTo(-r * 0.48, r * 0.2);
+  c.closePath();
+
+  let vGrad = c.createLinearGradient(0, -r * 0.42, 0, r * 0.5);
+  vGrad.addColorStop(0, '#ffffff');
+  vGrad.addColorStop(0.3, redMain);
+  vGrad.addColorStop(1, redDark);
+
+  c.fillStyle = vGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+  c.lineWidth = 1.0;
+  c.stroke();
+  c.restore();
+
+  // 7. 多角形キャノピー
+  c.save();
+  if (isPoweredUp) {
+    c.shadowBlur = 15;
+    c.shadowColor = '#00ffff';
+  }
+
+  c.beginPath();
+  c.moveTo(-r * 0.12, -r * 0.2);
+  c.lineTo(r * 0.12, -r * 0.2);
+  c.lineTo(r * 0.28, r * 0.08);
+  c.lineTo(r * 0.22, r * 0.35);
+  c.lineTo(0, r * 0.42);
+  c.lineTo(-r * 0.22, r * 0.35);
+  c.lineTo(-r * 0.28, r * 0.08);
+  c.closePath();
+
+  let baseGlassGrad = c.createLinearGradient(-r * 0.28, -r * 0.2, r * 0.28, r * 0.42);
+  baseGlassGrad.addColorStop(0, '#ffffff');
+  baseGlassGrad.addColorStop(0.25, isPoweredUp ? '#aaffff' : '#44aaff');
+  baseGlassGrad.addColorStop(0.7, coreColor);
+  baseGlassGrad.addColorStop(1, '#001133');
+
+  c.fillStyle = baseGlassGrad;
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+  c.lineWidth = 1.0;
+  c.stroke();
+
+  c.beginPath();
+  c.moveTo(-r * 0.12, -r * 0.2);
+  c.lineTo(r * 0.12, -r * 0.2);
+  c.lineTo(r * 0.18, 0);
+  c.lineTo(-r * 0.18, 0);
+  c.closePath();
+  c.fillStyle = 'rgba(255, 255, 255, 0.45)';
+  c.fill();
+  c.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+  c.lineWidth = 0.8;
+  c.stroke();
+
+  c.beginPath();
+  c.moveTo(-r * 0.12, -r * 0.2);
+  c.lineTo(-r * 0.18, 0);
+  c.lineTo(-r * 0.15, r * 0.22);
+  c.lineTo(-r * 0.28, r * 0.08);
+  c.closePath();
+  c.fillStyle = 'rgba(255, 255, 255, 0.25)';
+  c.fill();
+
+  c.restore();
+
+  c.restore();
+}
+// ==========================================
 // 7. ゲームエンティティ (Larios, AreaBoss, GroundMap, Player)
 // ==========================================
 class Larios {
@@ -2874,7 +3181,7 @@ class Larios {
       this.y += 0.8; 
       if (this.y > canvas.height + 50) this.toRemove = true; 
       let effArea = isLooped ? 10 : Math.min(10, areaLevel);
-      if (gameFrames % Math.max(20, 45 - effArea * 5) === 0 && player && !player.isDestroyed && !(gameState === 'PLAYING' && areaFrames >= 3900) && enemyBullets.length < 15) { 
+      if (gameFrames % Math.max(20, 45 - effArea * 5) === 0 && player && !player.isDestroyed && !(gameState === 'PLAYING' && areaFrames >= 3900) && enemyBullets.length < 10) { 
         enemyBullets.push(new EnemyBullet(this.x + 32, this.y + 32, player.x + 16, player.y + 20, 1.0 + (effArea * 0.06))); 
       } 
     } 
@@ -2928,12 +3235,10 @@ class AreaBoss {
         this.vx *= -1;
       }
       
-this.shotTimer--; 
-      if (this.shotTimer <= 0 && player && !player.isDestroyed && enemyBullets.length < 18) { 
+      this.shotTimer--; 
+      if (this.shotTimer <= 0 && player && !player.isDestroyed && enemyBullets.length < 10) { 
         let cx = this.x + this.width / 2, cy = this.y + this.height - 10;
         let spdBase = 1.0 + Math.min(areaLevel * 0.08, 1.2);
-        
-        // 自機への基本角度（扇形弾幕用）
         let angleToPlayer = Math.atan2(player.y - cy, player.x + 16 - cx);
 
         switch (this.bossType) {
@@ -2951,8 +3256,7 @@ this.shotTimer--;
             }
             break;
             
-          case 1: // Heavy Cruiser (前方〜下方向扇形8WAY拡散弾)
-            // 自機方向を中心に下方120度の範囲へ展開
+          case 1: // Heavy Cruiser (前方〜下方向扇形7WAY拡散弾)
             for (let i = -3; i <= 3; i++) {
               let ang = angleToPlayer + (i * 0.18);
               let tx = cx + Math.cos(ang) * 200;
@@ -2978,7 +3282,7 @@ this.shotTimer--;
             });
             break;
 
-          case 4: // Twin-Core Spider (左右2連コアから自機へ挟み込み弾)
+          case 4: // Twin-Core Spider (左右コアからの自機挟み込み弾)
             [-35, 35].forEach(offX => {
               let ang = Math.atan2(player.y - cy, (player.x + 16) - (cx + offX));
               for (let i = -1; i <= 1; i++) {
@@ -2988,7 +3292,7 @@ this.shotTimer--;
             });
             break;
 
-          case 5: // Trident Dreadnought (超高速3方向自機集中V字弾)
+          case 5: // Trident Dreadnought (超高速3方向V字弾)
             [-0.25, 0, 0.25].forEach(radOff => {
               let baseAng = angleToPlayer + radOff;
               let tx = cx + Math.cos(baseAng) * 200;
@@ -2997,14 +3301,14 @@ this.shotTimer--;
             });
             break;
 
-          case 6: // Solar Ring Gate (自機方向メインの下半球ワイド放射弾)
+          case 6: // Solar Ring Gate (下方ワイド9WAY放射弾)
             for (let i = -4; i <= 4; i++) {
-              let ang = (Math.PI / 2) + (i * 0.25); // 下方向基準のワイド展開
+              let ang = (Math.PI / 2) + (i * 0.25);
               enemyBullets.push(new EnemyBullet(cx, cy, cx + Math.cos(ang) * 200, cy + Math.sin(ang) * 200, spdBase * 0.85));
             }
             break;
 
-          case 7: // Hexa-Shield Command (自機追い込み型・連続6連射)
+          case 7: // Hexa-Shield Command (自機追尾6連射)
             for (let i = 0; i < 6; i++) {
               setTimeout(() => {
                 if (areaBoss && player && !player.isDestroyed) {
@@ -3018,7 +3322,7 @@ this.shotTimer--;
 
         let effArea = isLooped ? 10 : Math.min(10, areaLevel);
         this.shotTimer = Math.floor(Math.max(25, 75 - effArea * 8) / fireModifier); 
-      }
+      } 
     } 
   }
   
@@ -3029,16 +3333,15 @@ this.shotTimer--;
     ctx.shadowBlur = 30; ctx.shadowColor = tc; 
     let cc = (d > 0.7 && Math.floor(Date.now() / 100) % 2 === 0) ? '#ffffff' : tc; 
 
-    // エリアボスの8形態別描画
     switch (this.bossType) {
-      case 0: // Fortress Dome (ドーム要塞)
+      case 0:
         drawPolyDome(ctx, cx, 50, 75, 16, '#003388'); 
         drawPolyDome(ctx, cx, 50, 40, 12, tc); 
         drawPolyDome(ctx, cx, 50, 20, 8, cc); 
         ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, 50, 6, 0, Math.PI * 2); ctx.fill(); 
         break;
 
-      case 1: // Heavy Cruiser (重装多角艇)
+      case 1:
         drawPoly(ctx, [[30, 0], [130, 0], [160, 50], [100, 100], [60, 100], [0, 50]], '#441122'); 
         drawPoly(ctx, [[30, 0], [130, 0], [100, 30], [60, 30]], '#441122', 'rgba(255,255,255,0.3)'); 
         drawPoly(ctx, [[60, 30], [100, 30], [130, 50], [80, 70], [30, 50]], tc); 
@@ -3047,14 +3350,14 @@ this.shotTimer--;
         drawBevel(ctx, 30, 40, 20, 30, '#333333'); drawBevel(ctx, 110, 40, 20, 30, '#333333'); 
         break;
 
-      case 2: // Diamond Citadel (菱形機動要塞)
+      case 2:
         drawPoly(ctx, [[cx, 0], [140, 50], [cx, 100], [20, 50]], '#004422'); 
         drawPoly(ctx, [[cx, 0], [140, 50], [cx, 40]], '#004422', 'rgba(255,255,255,0.3)'); 
         drawPoly(ctx, [[cx, 100], [140, 50], [cx, 40]], tc, 'rgba(0,0,0,0.5)'); 
         drawPolyDome(ctx, cx, 50, 18, 6, cc); 
         break;
 
-      case 3: // Cross Carrier (十字巨大空母)
+      case 3:
         drawBevel(ctx, 20, 35, 120, 30, '#112233');
         drawBevel(ctx, 65, 10, 30, 80, '#1a3344');
         drawPolyDome(ctx, cx - 40, 50, 15, 8, tc);
@@ -3062,7 +3365,7 @@ this.shotTimer--;
         drawPolyDome(ctx, cx, 50, 22, 10, cc);
         break;
 
-      case 4: // Twin-Core Spider (双核多脚型要塞)
+      case 4:
         drawPoly(ctx, [[10, 10], [150, 10], [130, 90], [30, 90]], '#331100');
         drawPoly(ctx, [[0, 50], [30, 10], [30, 90]], tc);
         drawPoly(ctx, [[160, 50], [130, 10], [130, 90]], tc);
@@ -3070,21 +3373,21 @@ this.shotTimer--;
         drawPolyDome(ctx, cx + 35, 50, 18, 8, cc);
         break;
 
-      case 5: // Trident Dreadnought (三叉突撃戦艦)
+      case 5:
         drawPoly(ctx, [[cx, 100], [160, 20], [120, 0], [cx, 30], [40, 0], [0, 20]], '#222244');
         drawPoly(ctx, [[cx, 100], [120, 0], [cx, 40]], tc);
         drawPoly(ctx, [[cx, 100], [40, 0], [cx, 40]], tc);
         drawPolyDome(ctx, cx, 35, 20, 8, cc);
         break;
 
-      case 6: // Solar Ring Gate (円環状エネルギー要塞)
+      case 6:
         drawPolyDome(ctx, cx, 50, 70, 12, '#110033');
         drawPolyDome(ctx, cx, 50, 48, 12, tc);
         drawPolyDome(ctx, cx, 50, 28, 8, '#000000');
         drawPolyDome(ctx, cx, 50, 16, 8, cc);
         break;
 
-      case 7: // Hexa-Shield Command (六角バリア司令艦)
+      case 7:
         drawPoly(ctx, [[40, 0], [120, 0], [160, 50], [120, 100], [40, 100], [0, 50]], '#003322');
         drawPoly(ctx, [[50, 15], [110, 15], [140, 50], [110, 85], [50, 85], [20, 50]], tc);
         drawPolyDome(ctx, cx, 50, 24, 6, cc);
@@ -3231,22 +3534,15 @@ class Player {
   draw() {
     if (this.isDestroyed) return;
 
-    ctx.save(); ctx.translate(this.x, this.y); const isBlue = this.isPoweredUp; 
+    ctx.save();
+    ctx.translate(this.x, this.y);
     
-    if (this.invincibleTimer > 0 || this.isInvincible) {
-      ctx.globalAlpha = 0.4 + Math.sin(Date.now() / 40) * 0.4;
-    }
-
-    const mainGrad = ctx.createLinearGradient(0, 0, 0, this.height); mainGrad.addColorStop(0, '#ffffff'); mainGrad.addColorStop(0.3, '#ddecff'); mainGrad.addColorStop(1, '#334466');
-    const wingGrad = ctx.createLinearGradient(0, 0, 0, this.height); wingGrad.addColorStop(0, isBlue ? '#00e5ff' : '#ff2255'); wingGrad.addColorStop(1, '#0e1422');
-    ctx.shadowBlur = 18; ctx.shadowColor = isBlue ? '#00ccff' : '#ff3366'; ctx.fillStyle = wingGrad; drawPoly(ctx, [[16,-6], [48,22], [30,38], [16,28], [2,38], [-16,22]], wingGrad); drawPoly(ctx, [[16,4], [36,16], [16,13], [-4,16]], wingGrad); drawPoly(ctx, [[16,8], [40,24], [26,34], [16,25], [6,34], [-8,24]], '#ffaa00');
-    ctx.shadowBlur = 0; drawPoly(ctx, [[16,-8], [25,14], [21,38], [11,38], [7,14]], mainGrad);
-    ctx.shadowBlur = 15; ctx.shadowColor = '#00ffff'; ctx.fillStyle = '#aaeefe'; ctx.beginPath(); ctx.ellipse(16, 14, 3.5, 8, 0, 0, Math.PI * 2); ctx.fill();
-    if (Math.floor(Date.now() / 40) % 2 === 0) { ctx.shadowBlur = 20; ctx.shadowColor = isBlue ? '#00ffff' : '#ff8800'; drawPoly(ctx, [[10,38], [15,38], [12.5,52]], '#ffffff'); drawPoly(ctx, [[17,38], [22,38], [19.5,52]], '#ffffff'); }
+    let isInv = (this.invincibleTimer > 0 || this.isInvincible);
+    draw2D3DStylePlayer(ctx, this.width, this.height, this.isPoweredUp, isInv);
+    
     ctx.restore();
   }
 }
-
 // ==========================================
 // 8. 操作・イベントハンドラー ＆ ロジック関数
 // ==========================================
@@ -3355,7 +3651,7 @@ function processGameOver() {
 }
 
 function spawnWaveFromSequence() {
-  if (gameFrames % Math.floor(130 / spawnModifier) !== 0) return;
+  if (gameFrames % Math.floor(170 / spawnModifier) !== 0) return;
 
   if (!lariosSpawnedThisArea && !lariosBoss && areaFrames >= 1800) {
     lariosBoss = new Larios();
@@ -3364,7 +3660,7 @@ function spawnWaveFromSequence() {
   }
 
   let normalEnemiesCount = enemies.filter(e => e.type !== 'GUILER').length;
-  if (normalEnemiesCount >= 16) return;
+  if (normalEnemiesCount >= 10) return;
 
   let cw = ENEMY_SEQUENCE[sequenceIndex % ENEMY_SEQUENCE.length]; sequenceIndex++;
   
@@ -3377,7 +3673,7 @@ function spawnWaveFromSequence() {
   }
 
   let sameTypeCount = enemies.filter(e => e.type === cw.type).length; 
-  let maxCanSpawn = (cw.type === 'GUILER') ? 2 : Math.min(8 - sameTypeCount, 16 - normalEnemiesCount); 
+  let maxCanSpawn = (cw.type === 'GUILER') ? 2 : Math.min(5 - sameTypeCount, 10 - normalEnemiesCount); 
   if (maxCanSpawn <= 0) return;
 
   let ct = Math.min(maxCanSpawn, Math.max(1, Math.floor(cw.count * spawnModifier))); 
@@ -3393,12 +3689,27 @@ function spawnWaveFromSequence() {
   for (let i = 0; i < ct; i++) {
     let sx = baseSx; 
     let sy = (cw.type === 'GUILER') ? canvas.height + 50 : -50;
-    if (formationType === 0) { sy -= i * 25; } 
-    else if (formationType === 1) { sx = 40 + (i * 35) % (canvas.width - 80); sy = -50 - Math.floor(i / 8) * 30; } 
+    
+    // ★★★ 【フェラーの五月雨出現処理】 ★★★
+    if (cw.type === 'FAILLAR') {
+      let laneWidth = canvas.width / ct;
+      sx = laneWidth * i + (laneWidth - 36) / 2;
+      sy = -50 - Math.random() * 180;
+    }
+    else if (formationType === 0) { sy -= i * 25; } 
+    else if (formationType === 1) { sx = 40 + (i * 35) % (canvas.width - 80); sy = -50 - Math.floor(i / 5) * 30; } 
     else if (formationType === 2) { let mid = Math.floor(ct / 2); sx = baseSx + (i - mid) * 30; sy = -50 - Math.abs(i - mid) * 20; } 
     else if (formationType === 3) { sx = baseSx + i * 20; sy = -50 - i * 20; }
+
     sx = Math.max(20, Math.min(canvas.width - 20, sx));
-    enemies.push(new Enemy(sx, sy, cw.type, { offset: i * 0.4, weak: cw.weak, dense: cw.dense, fast: cw.fast }));
+
+    enemies.push(new Enemy(sx, sy, cw.type, { 
+      offset: i * 0.4, 
+      weak: cw.weak, 
+      dense: cw.dense, 
+      fast: cw.fast,
+      mix: cw.mix
+    }));
   }
 }
 
@@ -3550,6 +3861,18 @@ function checkCollisions() {
 // ==========================================
 function drawDemoEnemyGraphic(sh, c, x, y) {
   ctx.save(); ctx.translate(x, y); ctx.shadowBlur = 20; ctx.shadowColor = c;
+  
+  if (sh === 'unknown') {
+    ctx.translate(25, 25);
+    ctx.fillStyle = '#888888';
+    ctx.font = 'bold 18px "Segoe UI"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('UNKNOWN', 0, 0);
+    ctx.restore();
+    return;
+  }
+
   if (ENEMY_DEMO_LIST[demoEnemyIndex].name.includes('GALLI')) {
     draw3DGalli(ctx, 50, 50, c, -gameFrames * 0.04);
     ctx.restore();
@@ -3666,10 +3989,9 @@ function drawCoolTitleTextOnly() {
 }
 
 function drawMiniPlayerIcon(x, y) {
-  ctx.save(); ctx.translate(x, y);
-  const wingGrad = ctx.createLinearGradient(0, 0, 0, 16); wingGrad.addColorStop(0, '#ff2255'); wingGrad.addColorStop(1, '#0e1422');
-  drawPoly(ctx, [[8,-2], [24,9], [15,15], [8,11], [1,15], [-8,9]], wingGrad);
-  drawPoly(ctx, [[8,-4], [12.5,7], [10.5,15], [5.5,15], [3.5,7]], '#ffffff');
+  ctx.save();
+  ctx.translate(x, y);
+  draw2D3DStylePlayer(ctx, 20, 25, false, false);
   ctx.restore();
 }
 
