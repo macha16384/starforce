@@ -5,22 +5,191 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>STAR FORCE - Ultimate Modern Edition</title>
   <style>
-    body { background-color: #03040a; color: #fff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin: 0; padding: 10px; user-select: none; -webkit-user-select: none; }
-    #game-container { position: relative; width: 100%; max-width: 480px; margin: 0 auto; box-shadow: 0 0 40px rgba(0, 200, 255, 0.4); border-radius: 6px; overflow: hidden; }
-    canvas { background: linear-gradient(to bottom, #010205 0%, #051022 100%); display: block; width: 100%; height: auto; touch-action: none; }
-    .instructions { margin-top: 15px; font-size: 13px; color: #88aacc; letter-spacing: 1px; line-height: 1.6; }
-    h1 { font-weight: 300; letter-spacing: 4px; color: #00ffff; text-shadow: 0 0 15px #00ffff; margin: 10px 0; font-size: 24px; }
-    @media (max-width: 480px) { body { padding: 5px; } h1 { font-size: 18px; margin: 5px 0; } }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #03040a;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 20px 10px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    /* 全体レイアウト（ゲーム画面 + 外側操作ガイドパネル） */
+    .game-container {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      align-items: flex-start;
+      background-color: #0b0f19;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 40px rgba(0, 200, 255, 0.3);
+      border: 1px solid #1a2638;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 480px;
+    }
+
+    canvas {
+      background: linear-gradient(to bottom, #010205 0%, #051022 100%);
+      display: block;
+      width: 480px;
+      height: 640px;
+      touch-action: none;
+      border: 2px solid #00ffff;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    }
+
+    /* 画面外の操作ガイドパネル */
+    .info-panel {
+      width: 220px;
+      background-color: #09111e;
+      border: 1px solid #00e5ff;
+      border-radius: 6px;
+      padding: 15px;
+      font-size: 13px;
+      line-height: 1.6;
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.15);
+    }
+    .info-panel h2 {
+      font-size: 15px;
+      color: #00ffff;
+      border-bottom: 1px solid #00aacc;
+      padding-bottom: 6px;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px #00ffff;
+    }
+    .control-list {
+      list-style: none;
+    }
+    .control-list li {
+      margin-bottom: 10px;
+      color: #b0d0e6;
+    }
+    .key {
+      background-color: #1a2a40;
+      border: 1px solid #00aacc;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-weight: bold;
+      color: #ffffff;
+      margin-right: 2px;
+    }
+
+    /* デバイス・コントローラー選択画面（段階切り替え対応） */
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(3, 4, 10, 0.92);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      z-index: 10;
+    }
+    .overlay h2 {
+      color: #00ffff;
+      font-size: 22px;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px #00ffff;
+      margin-bottom: 10px;
+    }
+    .select-btn {
+      padding: 14px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(135deg, #0088cc, #004488);
+      border: 1px solid #00ffff;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 260px;
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+      transition: all 0.2s;
+    }
+    .select-btn:hover {
+      background: linear-gradient(135deg, #00aaff, #0066cc);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+    }
+    .btn-secondary {
+      background: linear-gradient(135deg, #00aa66, #005533);
+      border-color: #00ffaa;
+      box-shadow: 0 0 10px rgba(0, 255, 170, 0.3);
+    }
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, #00cc88, #007744);
+      box-shadow: 0 0 20px rgba(0, 255, 170, 0.6);
+    }
+    .btn-back {
+      background: #445566;
+      border-color: #88aacc;
+      width: 120px;
+      padding: 8px 16px;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .game-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .info-panel {
+        width: 100%;
+        max-width: 480px;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <h1>STAR FORCE : AREA STRIKE</h1>
-  <div id="game-container">
-    <canvas id="canvas" width="480" height="640"></canvas>
-  </div>
-  <div class="instructions" id="inst-text">
-    [ 案 内 ] クリック/タップ または Spaceキー でデバイスを選択してください
+  <div class="game-container">
+    <div class="canvas-wrapper">
+      <canvas id="canvas" width="480" height="640"></canvas>
+
+      <!-- デバイス＆操作入力選択画面 (オーバーレイ) -->
+      <div id="deviceOverlay" class="overlay">
+        <!-- 第1段階：デバイス選択 (PC / MOBILE) -->
+        <div id="stepDevice" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+          <h2>SELECT DEVICE</h2>
+          <button class="select-btn" onclick="showPcSubMenu()">PC</button>
+          <button class="select-btn btn-secondary" onclick="confirmControlSelection('mobile')">SMARTPHONE (TOUCH)</button>
+        </div>
+
+        <!-- 第2段階：PCの場合の入力デバイス選択 (キーボード / コントローラー) -->
+        <div id="stepPcControl" style="display: none; flex-direction: column; align-items: center; gap: 15px;">
+          <h2>PC CONTROL MODE</h2>
+          <button class="select-btn" onclick="confirmControlSelection('pc-keyboard')">キーボード (方向キー)</button>
+          <button class="select-btn btn-secondary" onclick="confirmControlSelection('pc-controller')">コントローラー (Gamepad)</button>
+          <button class="select-btn btn-back" onclick="showDeviceMenu()">戻る</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 画面外の操作ガイドパネル -->
+    <div class="info-panel">
+      <h2>CONTROLS</h2>
+      <ul id="controlInstructions" class="control-list">
+        <li>操作モードを選択してください</li>
+      </ul>
+    </div>
   </div>
 
 <script>
@@ -200,6 +369,7 @@ function draw2D3DStyleSuperSonic(c, w, h) {
   c.restore();
   c.restore();
 }
+
 // ★ ガイラ（GUILER）擬似3D描画関数
 function draw2D3DStyleGuiler(c, w, h) {
   c.save();
@@ -407,10 +577,52 @@ function draw2D3DStyleLariosParts(c, x, y, partsOffset, assembled, rotAngle) {
 }
 
 // ==========================================
-// 2. グローバル変数宣言
+// 2. グローバル変数宣言 ＆ 操作UI切り替え定義
 // ==========================================
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+
+const stepDevice = document.getElementById('stepDevice');
+const stepPcControl = document.getElementById('stepPcControl');
+const deviceOverlay = document.getElementById('deviceOverlay');
+const instructions = document.getElementById('controlInstructions');
+
+function showPcSubMenu() {
+  stepDevice.style.display = 'none';
+  stepPcControl.style.display = 'flex';
+}
+
+function showDeviceMenu() {
+  stepPcControl.style.display = 'none';
+  stepDevice.style.display = 'flex';
+}
+
+function confirmControlSelection(mode) {
+  controlMode = mode;
+  deviceOverlay.style.display = 'none';
+
+  if (mode === 'pc-keyboard') {
+    instructions.innerHTML = `
+      <li><span class="key">↑</span><span class="key">↓</span><span class="key">←</span><span class="key">→</span> : 移動</li>
+      <li><span class="key">SPACE</span> : ショット</li>
+      <li><span class="key">Z</span> : ポーズ</li>
+    `;
+  } else if (mode === 'pc-controller') {
+    instructions.innerHTML = `
+      <li><span class="key">D-Pad / Stick</span> : 移動</li>
+      <li><span class="key">Aボタン (Btn 0)</span> : ショット</li>
+      <li><span class="key">START (Btn 9)</span> : ポーズ / 再開</li>
+    `;
+  } else if (mode === 'mobile') {
+    instructions.innerHTML = `
+      <li><span class="key">画面ドラッグ</span> : 移動</li>
+      <li><span class="key">ホールド</span> : オート連射</li>
+      <li><span class="key">右下ボタン</span> : ポーズ</li>
+    `;
+  }
+
+  gameState = 'TITLE';
+}
 
 const GREEK_ALPHABETS = ['ALPHA','BETA','GAMMA','DELTA','EPSILON','ZETA','ETA','THETA','IOTA','KAPPA','LAMBDA','MU','NU','XI','OMICRON','PI','RHO','SIGMA','TAU','UPSILON','PHI','CHI','PSI','OMEGA'];
 const DEFAULT_HIGH_SCORES = [
@@ -488,6 +700,7 @@ const GALLI_3D_MESH = {
   ]
 };
 
+// ★ ガリ（GALLI）Y軸擬似3D立体回転描画関数
 function draw3DGalli(c, w, h, baseColor, rotYAnim) {
   c.save();
   c.translate(w / 2, h / 2);
@@ -878,6 +1091,7 @@ function draw3DGadoha(c, w, h, rotZAnim) {
   });
   c.restore();
 }
+
 // ★ アマラ（AMARA）3Dデータ ＆ 描画関数
 function createCompleteAmara3DMesh() {
   let vertices = [];
@@ -1227,6 +1441,7 @@ function draw3DLope(c, w, h, baseColor, rotZAnim) {
   });
   c.restore();
 }
+
 // ★ パタータ（PATARTA）3Dデータ ＆ 描画関数
 function createHorizontalPatartaMesh() {
   let vertices = [];
@@ -1540,7 +1755,7 @@ function draw3DQuiri(c, w, h, baseColor, rotYAnim) {
     return { pts, color: f.c, z: avgZ };
   });
 
-  renderFaces.sort((a, b) => b.z - a.z);
+  renderFaces.sort((a, b) => a.z - b.z);
 
   renderFaces.forEach(f => {
     c.beginPath();
@@ -2620,6 +2835,7 @@ const CUSTOM_MAP_PATTERNS = {
     "map": ["000000000000","111111111111","111111111111","111111111111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111100001111","1+11000011-1","111111111111","111111111111","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","111111111111","111111111111","11SSSSSSSS11","11SSSSSSSS11","111111111111","111111111111","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","11T11ZZ11T11","111111111111","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","111111111111","111111111111","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","11B1B1B1B111","11CRCRCRCR11","111111111111","111111111111","000000000000"]
   }
 };
+
 // ==========================================
 // 6. ゲームエンティティ (Enemy クラス)
 // ==========================================
@@ -2693,7 +2909,6 @@ class Enemy {
         this.y += 2.5 * spd;
         this.x = this.startX + Math.sin(this.lifeTime * freq + this.formationOffset) * amp;
       } 
-      // ★★★ 【TITTA (ティッタ) のN字急反転軌道】ここから ★★★
       else if (cat === 'turn') {
         let spdBase = spd;
         let targetX = player ? player.x + 16 : canvas.width / 2;
@@ -2756,7 +2971,6 @@ class Enemy {
           }
         }
       } 
-      // ★★★ 【TITTA (ティッタ) のN字急反転軌道】ここまで ★★★
       else if (cat === 'pause') {
         let pauseY = p.pauseY || 200;
         if (this.state === 'enter') {
@@ -2772,7 +2986,6 @@ class Enemy {
           this.y += 3.0 * spd;
         }
       }
-      // ★★★ 【FAILLAR (フェラー) の軌道・速度制御】ここから ★★★
       else if (cat === 'dive') {
         let spdBase = spd;
 
@@ -2799,7 +3012,6 @@ class Enemy {
         this.x += this.vx || 0;
         this.y += this.vy || (6.5 * spdBase);
       }
-      // ★★★ 【FAILLAR (フェラー) の軌道・速度制御】ここまで ★★★
       else if (cat === 'special' && p.path && p.path.length > 0) {
         let t = (this.lifeTime * 0.01) % p.path.length;
         let idx = Math.floor(t);
@@ -2894,6 +3106,7 @@ class Enemy {
     } catch (e) {} 
   }
 }
+
 // ==========================================
 // 自機（ファイナルスター疑似3D）描画関数
 // ==========================================
@@ -2912,7 +3125,6 @@ function draw2D3DStylePlayer(c, w, h, isPoweredUp, isInvincible) {
     c.globalAlpha = 0.4 + Math.sin(Date.now() / 30) * 0.4;
   }
 
-  // 1. ツインバーニアノズル（お尻部分）
   c.save();
   let drawNozzle = (nx, ny, nRad) => {
     c.beginPath();
@@ -2956,7 +3168,6 @@ function draw2D3DStylePlayer(c, w, h, isPoweredUp, isInvincible) {
   }
   c.restore();
 
-  // 2. 主翼ベース（後退ウイング構造・翼端まで隙間なく結合）
   c.save();
   c.beginPath();
   c.moveTo(-r * 0.25, -r * 0.2);
@@ -2982,7 +3193,6 @@ function draw2D3DStylePlayer(c, w, h, isPoweredUp, isInvincible) {
   c.stroke();
   c.restore();
 
-  // 3. 翼上の幾何学ブルーパターン
   c.save();
   [-1, 1].forEach(side => {
     c.beginPath();
@@ -3005,7 +3215,6 @@ function draw2D3DStylePlayer(c, w, h, isPoweredUp, isInvincible) {
   });
   c.restore();
 
-  // 4. 翼端一体化ガンポッド＆先端レッドブロック
   c.save();
   [-1, 1].forEach(side => {
     c.beginPath();
@@ -3047,7 +3256,6 @@ function draw2D3DStylePlayer(c, w, h, isPoweredUp, isInvincible) {
   });
   c.restore();
 
-  // 5. センター機体（フラット台形ノーズ）
   c.save();
   c.beginPath();
   c.moveTo(-r * 0.22, -r * 1.0);
@@ -3076,7 +3284,6 @@ function draw2D3DStylePlayer(c, w, h, isPoweredUp, isInvincible) {
   c.strokeRect(-r * 0.15, -r * 0.95, r * 0.3, r * 0.12);
   c.restore();
 
-  // 6. 赤いV字型メカアーマー
   c.save();
   c.beginPath();
   c.moveTo(0, -r * 0.42);
@@ -3099,7 +3306,6 @@ function draw2D3DStylePlayer(c, w, h, isPoweredUp, isInvincible) {
   c.stroke();
   c.restore();
 
-  // 7. 多角形キャノピー
   c.save();
   if (isPoweredUp) {
     c.shadowBlur = 15;
@@ -3153,6 +3359,7 @@ function draw2D3DStylePlayer(c, w, h, isPoweredUp, isInvincible) {
 
   c.restore();
 }
+
 // ==========================================
 // 7. ゲームエンティティ (Larios, AreaBoss, GroundMap, Player)
 // ==========================================
@@ -3242,7 +3449,7 @@ class AreaBoss {
         let angleToPlayer = Math.atan2(player.y - cy, player.x + 16 - cx);
 
         switch (this.bossType) {
-          case 0: // Fortress Dome (自機狙い5WAY散弾 ＋ 直下レーザー)
+          case 0:
             for (let i = -2; i <= 2; i++) {
               let ang = angleToPlayer + (i * 0.15);
               let tx = cx + Math.cos(ang) * 200;
@@ -3256,7 +3463,7 @@ class AreaBoss {
             }
             break;
             
-          case 1: // Heavy Cruiser (前方〜下方向扇形7WAY拡散弾)
+          case 1:
             for (let i = -3; i <= 3; i++) {
               let ang = angleToPlayer + (i * 0.18);
               let tx = cx + Math.cos(ang) * 200;
@@ -3265,13 +3472,13 @@ class AreaBoss {
             }
             break;
 
-          case 2: // Diamond Citadel (自機狙い高速3連交差弾)
+          case 2:
             [-25, 0, 25].forEach(offX => {
               enemyBullets.push(new EnemyBullet(cx + offX, cy, player.x + 16, player.y + 20, spdBase * 1.2));
             });
             break;
 
-          case 3: // Cross Carrier (左右直下レーザー ＋ 自機追尾3WAY)
+          case 3:
             let ebL = new EnemyBullet(cx - 50, cy, cx - 50, canvas.height); ebL.speedMult = 3.0; ebL.isLaser = true;
             let ebR = new EnemyBullet(cx + 50, cy, cx + 50, canvas.height); ebR.speedMult = 3.0; ebR.isLaser = true;
             enemyBullets.push(ebL, ebR); audio.playEnemyLaser();
@@ -3282,7 +3489,7 @@ class AreaBoss {
             });
             break;
 
-          case 4: // Twin-Core Spider (左右コアからの自機挟み込み弾)
+          case 4:
             [-35, 35].forEach(offX => {
               let ang = Math.atan2(player.y - cy, (player.x + 16) - (cx + offX));
               for (let i = -1; i <= 1; i++) {
@@ -3292,7 +3499,7 @@ class AreaBoss {
             });
             break;
 
-          case 5: // Trident Dreadnought (超高速3方向V字弾)
+          case 5:
             [-0.25, 0, 0.25].forEach(radOff => {
               let baseAng = angleToPlayer + radOff;
               let tx = cx + Math.cos(baseAng) * 200;
@@ -3301,14 +3508,14 @@ class AreaBoss {
             });
             break;
 
-          case 6: // Solar Ring Gate (下方ワイド9WAY放射弾)
+          case 6:
             for (let i = -4; i <= 4; i++) {
               let ang = (Math.PI / 2) + (i * 0.25);
               enemyBullets.push(new EnemyBullet(cx, cy, cx + Math.cos(ang) * 200, cy + Math.sin(ang) * 200, spdBase * 0.85));
             }
             break;
 
-          case 7: // Hexa-Shield Command (自機追尾6連射)
+          case 7:
             for (let i = 0; i < 6; i++) {
               setTimeout(() => {
                 if (areaBoss && player && !player.isDestroyed) {
@@ -3509,17 +3716,43 @@ class Player {
 
     if (this.invincibleTimer > 0) this.invincibleTimer--;
 
-    if (controlMode === 'PC') { 
-      if (keys["ArrowLeft"] || keys["KeyA"]) this.x -= this.speed; 
-      if (keys["ArrowRight"] || keys["KeyD"]) this.x += this.speed; 
-      if (keys["ArrowUp"] || keys["KeyW"]) this.y -= this.speed; 
-      if (keys["ArrowDown"] || keys["KeyS"]) this.y += this.speed; 
+    // 1. PC: キーボード操作 (方向キー)
+    if (controlMode === 'pc-keyboard') { 
+      if (keys["ArrowLeft"]) this.x -= this.speed; 
+      if (keys["ArrowRight"]) this.x += this.speed; 
+      if (keys["ArrowUp"]) this.y -= this.speed; 
+      if (keys["ArrowDown"]) this.y += this.speed; 
     }
+
+    // 2. PC: コントローラー操作 (Gamepad API - 移動のみ)
+    if (controlMode === 'pc-controller') {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      const gp = gamepads[0];
+      if (gp) {
+        const axisX = gp.axes[0];
+        const axisY = gp.axes[1];
+
+        if (axisX < -0.3 || gp.buttons[14]?.pressed) this.x -= this.speed;
+        if (axisX > 0.3 || gp.buttons[15]?.pressed) this.x += this.speed;
+        if (axisY < -0.3 || gp.buttons[12]?.pressed) this.y -= this.speed;
+        if (axisY > 0.3 || gp.buttons[13]?.pressed) this.y += this.speed;
+      }
+    }
+
     this.x = Math.max(0, Math.min(canvas.width - this.width, this.x)); 
     this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
     
     if (this.cooldown > 0) this.cooldown--;
-    let isFiring = (controlMode === 'MOBILE' && pointerDown) || (controlMode === 'PC' && keys["Space"]);
+
+    // 発射判定
+    let isFiring = false;
+    if (controlMode === 'mobile' && pointerDown) isFiring = true;
+    if (controlMode === 'pc-keyboard' && keys["Space"]) isFiring = true;
+    if (controlMode === 'pc-controller') {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      if (gamepads[0]?.buttons[0]?.pressed) isFiring = true; // Aボタン
+    }
+
     if (isFiring && this.cooldown === 0) { 
       if (this.isPoweredUp) { 
         bullets.push(new Bullet(this.x + 6, this.y)); 
@@ -3543,6 +3776,7 @@ class Player {
     ctx.restore();
   }
 }
+
 // ==========================================
 // 8. 操作・イベントハンドラー ＆ ロジック関数
 // ==========================================
@@ -3553,23 +3787,23 @@ function getTouchPos(e) {
 
 function handlePointerDown(e) {
   if (e.cancelable) e.preventDefault(); audio.init(); let p = getTouchPos(e); if (!p) return; prevPointerX = p.x; prevPointerY = p.y;
-  if (gameState === 'SELECT_DEVICE') { pointerDown = true; if (p.y > 200 && p.y < 340) { controlMode = 'PC'; document.getElementById("inst-text").innerHTML = "[ MOVE ] Arrow Keys / WASD &nbsp;&nbsp;|&nbsp;&nbsp; [ FIRE ] SPACE<br>[ PAUSE ] Z Key"; gameState = 'TITLE'; pointerDown = false; return; } else if (p.y >= 340 && p.y < 480) { controlMode = 'MOBILE'; document.getElementById("inst-text").innerHTML = "[ 操 作 ] スワイプで移動 ＆ タッチ中はオート連射<br>画面右下でポーズ"; gameState = 'TITLE'; pointerDown = false; return; } }
+
   if (gameState === 'HIGHSCORE' || gameState === 'DEMO_CHARA') { pointerDown = true; let n = Date.now(); if (p.x >= 40 && p.x <= 80 && p.y >= 210 && p.y <= 245) { if (n - lastCrownTapTime < 600) { crownTapCount++; if (crownTapCount >= 5) { resetHighScores(); crownTapCount = 0; } } else { crownTapCount = 1; } lastCrownTapTime = n; return; } }
   if (gameState === 'PAUSE') { gameState = previousGameState; pointerDown = false; return; }
   
-  if ((gameState === 'PLAYING' || gameState === 'BOSS_PHASE') && controlMode === 'MOBILE') { 
+  if ((gameState === 'PLAYING' || gameState === 'BOSS_PHASE') && controlMode === 'mobile') { 
     if (p.x > canvas.width - 70 && p.y > canvas.height - 70) { 
       previousGameState = gameState; gameState = 'PAUSE'; pointerDown = false; return; 
     } 
   }
   
   pointerDown = true;
-  if (gameState === 'TITLE' || gameState === 'HIGHSCORE' || gameState === 'DEMO_CHARA') { if (controlMode === 'MOBILE') { let n = Date.now(); if (p.x < 100 && p.y < 100) { if (n - lastTapTime < 600) { secretTapCount++; if (secretTapCount >= 5 && !invincibleUnlocked) { invincibleUnlocked = true; audio.playSecretBonus(); } } else { secretTapCount = 1; } lastTapTime = n; } else { startGame(); } } } else if (gameState === 'GAMEOVER') { resetToTitle(); }
+  if (gameState === 'TITLE' || gameState === 'HIGHSCORE' || gameState === 'DEMO_CHARA') { if (controlMode === 'mobile') { let n = Date.now(); if (p.x < 100 && p.y < 100) { if (n - lastTapTime < 600) { secretTapCount++; if (secretTapCount >= 5 && !invincibleUnlocked) { invincibleUnlocked = true; audio.playSecretBonus(); } } else { secretTapCount = 1; } lastTapTime = n; } else { startGame(); } } } else if (gameState === 'GAMEOVER') { resetToTitle(); }
 }
 
 function handlePointerMove(e) {
   if (e.cancelable) e.preventDefault(); if (!pointerDown || gameState === 'PAUSE') return; let p = getTouchPos(e); if (!p) return;
-  if (player && !player.isDestroyed && (gameState === 'PLAYING' || gameState === 'BOSS_PHASE') && prevPointerX !== null && controlMode === 'MOBILE') { let dx = p.x - prevPointerX, dy = p.y - prevPointerY; if (!isNaN(dx)) player.x += dx * 1.5; if (!isNaN(dy)) player.y += dy * 1.5; }
+  if (player && !player.isDestroyed && (gameState === 'PLAYING' || gameState === 'BOSS_PHASE') && prevPointerX !== null && controlMode === 'mobile') { let dx = p.x - prevPointerX, dy = p.y - prevPointerY; if (!isNaN(dx)) player.x += dx * 1.5; if (!isNaN(dy)) player.y += dy * 1.5; }
   prevPointerX = p.x; prevPointerY = p.y;
 }
 
@@ -3578,17 +3812,37 @@ function handlePointerUp(e) { if (e.cancelable) e.preventDefault(); pointerDown 
 canvas.addEventListener('touchstart', handlePointerDown, { passive: false }); canvas.addEventListener('touchmove', handlePointerMove, { passive: false }); canvas.addEventListener('touchend', handlePointerUp, { passive: false }); canvas.addEventListener('touchcancel', handlePointerUp, { passive: false }); canvas.addEventListener('mousedown', handlePointerDown); canvas.addEventListener('mousemove', handlePointerMove); canvas.addEventListener('mouseup', handlePointerUp); canvas.addEventListener('mouseleave', handlePointerUp);
 
 window.addEventListener("keydown", e => {
-  audio.init(); keys[e.code] = true;
-  if (gameState === 'NAME_ENTRY' && controlMode === 'PC') {
+  audio.init(); keys[e.code] = true; keys[e.key] = true;
+  
+  // 画面スクロール防止
+  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) {
+    e.preventDefault();
+  }
+
+  // ★ ESCキーを押すと、いつでもデバイス・コントロール選択画面（SELECT DEVICE）に戻る
+  if (e.code === 'Escape') {
+    stepPcControl.style.display = 'none';
+    stepDevice.style.display = 'flex';
+    deviceOverlay.style.display = 'flex';
+    instructions.innerHTML = '<li>操作モードを選択してください</li>';
+    gameState = 'SELECT_DEVICE';
+    return;
+  }
+
+  if (gameState === 'NAME_ENTRY' && controlMode !== 'mobile') {
     if (e.key === 'Enter') { while (playerName.length < 3) playerName += " "; highScores.splice(rankIndex, 0, { name: playerName, score: score, area: areaLevel }); highScores = highScores.slice(0, 5); try { localStorage.setItem('starforce_highscores', JSON.stringify(highScores)); } catch (err) {} gameState = 'HIGHSCORE'; titleTimer = 0; } else if (e.key === 'Backspace') { playerName = playerName.slice(0, -1); } else if (e.key.length === 1 && playerName.length < 3) { if (/^[a-zA-Z0-9!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]$/.test(e.key)) { playerName += e.key.toUpperCase(); } }
     return;
   }
   if (e.code === 'KeyZ' && (gameState === 'PLAYING' || gameState === 'BOSS_PHASE')) { previousGameState = gameState; gameState = 'PAUSE'; return; }
-  if (e.code === 'Space' || e.code === 'Enter') { if (e.code === 'Space') e.preventDefault(); if (gameState === 'PAUSE') { gameState = previousGameState; } else if (gameState === 'SELECT_DEVICE') { controlMode = 'PC'; document.getElementById("inst-text").innerHTML = "[ MOVE ] Arrow Keys / WASD &nbsp;&nbsp;|&nbsp;&nbsp; [ FIRE ] SPACE<br>[ PAUSE ] Z Key"; gameState = 'TITLE'; return; } else if ((gameState === 'TITLE' || gameState === 'HIGHSCORE' || gameState === 'DEMO_CHARA') && controlMode === 'PC') { startGame(); } }
+  if (e.code === 'Space' || e.code === 'Enter') { 
+    if (gameState === 'PAUSE') { gameState = previousGameState; } 
+    else if ((gameState === 'TITLE' || gameState === 'HIGHSCORE' || gameState === 'DEMO_CHARA') && controlMode !== 'mobile') { startGame(); } 
+  }
   if (e.key === 'F5') { e.preventDefault(); resetToTitle(); return; }
   if (gameState === 'TITLE' || gameState === 'HIGHSCORE' || gameState === 'DEMO_CHARA') { secretInput += e.key.toLowerCase(); if (secretInput.length > 20) secretInput = secretInput.substring(secretInput.length - 20); if (secretInput.includes("muteki") && !invincibleUnlocked) { invincibleUnlocked = true; audio.playSecretBonus(); } if (secretInput.includes("clear") && (gameState === 'HIGHSCORE' || gameState === 'DEMO_CHARA')) { resetHighScores(); secretInput = ""; } }
 });
-window.addEventListener("keyup", e => keys[e.code] = false);
+
+window.addEventListener("keyup", e => { keys[e.code] = false; keys[e.key] = false; });
 
 function loadHighScores() {
   try {
@@ -3608,6 +3862,8 @@ function resetHighScores() {
 }
 
 function startGame() {
+  audio.init(); // ★ Web Audio APIのブロックを解除してサウンドを有効化
+
   gameState = 'PLAYING'; gameFrames = 0; areaFrames = 0; areaLevel = 1; score = 0;
   B_destroyed = 0; b_destroyed = 0; bonusMessage = ""; hiddenDestroyedThisArea = 0; spawnModifier = 1.0; fireModifier = 1.0; sequenceIndex = 0; isLooped = false; lariosSpawnedThisArea = false;
   
@@ -3620,7 +3876,9 @@ function startGame() {
 
   player = new Player(); map = new GroundMap();
   bullets = []; enemyBullets = []; enemies = []; explosions = []; debrisList = []; activeWaves = []; items = [];
-  lariosBoss = null; areaBoss = null; audio.playStart();
+  lariosBoss = null; areaBoss = null; 
+  
+  audio.playStart();
 }
 
 function resetToTitle() {
@@ -3637,7 +3895,7 @@ function processGameOver() {
   for (let i = 0; i < 5; i++) { if (!highScores[i] || score > highScores[i].score) { rankIndex = i; break; } }
   if (rankIndex !== -1) {
     gameState = 'NAME_ENTRY'; playerName = "";
-    if (controlMode === 'MOBILE') {
+    if (controlMode === 'mobile') {
       setTimeout(() => {
         let pName = prompt("【NEW HIGH SCORE!】\nランクインしました！名前を入力してください(英数字3文字):", "AAA");
         if (pName === null) pName = "AAA"; pName = pName.substring(0, 3).toUpperCase().replace(/[^A-Z0-9!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/g, '');
@@ -3690,7 +3948,6 @@ function spawnWaveFromSequence() {
     let sx = baseSx; 
     let sy = (cw.type === 'GUILER') ? canvas.height + 50 : -50;
     
-    // ★★★ 【フェラーの五月雨出現処理】 ★★★
     if (cw.type === 'FAILLAR') {
       let laneWidth = canvas.width / ct;
       sx = laneWidth * i + (laneWidth - 36) / 2;
@@ -3856,6 +4113,7 @@ function checkCollisions() {
     if (areaBoss && areaBoss.state === 'COMBAT' && px >= areaBoss.x && px <= areaBoss.x + areaBoss.width && py >= areaBoss.y && py <= areaBoss.y + areaBoss.height) handlePlayerHit();
   }
 }
+
 // ==========================================
 // 9. 画面描画 ＆ タイトルデモ関数
 // ==========================================
@@ -3998,19 +4256,82 @@ function drawMiniPlayerIcon(x, y) {
 // ==========================================
 // 10. メインゲームループ
 // ==========================================
+let gpStartPressed = false;
+let gpAButtonPressed = false;
+
 function gameLoop() {
   try {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // --- コントローラー（Gamepad API）常時入力チェック ---
+    if (controlMode === 'pc-controller') {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      const gp = gamepads[0];
+
+      if (gp) {
+        // 1. STARTボタン (Btn 9) の処理
+        if (gp.buttons[9]?.pressed) {
+          if (!gpStartPressed) {
+            gpStartPressed = true;
+            audio.init();
+
+            if (gameState === 'TITLE' || gameState === 'HIGHSCORE' || gameState === 'DEMO_CHARA') {
+              startGame();
+            } else if (gameState === 'PLAYING' || gameState === 'BOSS_PHASE') {
+              previousGameState = gameState;
+              gameState = 'PAUSE';
+            } else if (gameState === 'PAUSE') {
+              gameState = previousGameState;
+            }
+          }
+        } else {
+          gpStartPressed = false;
+        }
+
+        // 2. 「×」ボタン (Btn 0 / Aボタン位置) の処理
+        if (gp.buttons[0]?.pressed) {
+          if (!gpAButtonPressed) {
+            gpAButtonPressed = true;
+            audio.init();
+
+            // タイトル・ハイスコア・デモ画面でゲームスタート
+            if (gameState === 'TITLE' || gameState === 'HIGHSCORE' || gameState === 'DEMO_CHARA') {
+              startGame();
+            } 
+            // ★ ゲームオーバー画面で「×」ボタンを押すとタイトル画面へ戻る
+            else if (gameState === 'GAMEOVER') {
+              resetToTitle();
+            }
+            // ポーズ画面で「×」ボタンを押すとコントロール選択画面に戻る
+            else if (gameState === 'PAUSE') {
+              stepPcControl.style.display = 'none';
+              stepDevice.style.display = 'flex';
+              deviceOverlay.style.display = 'flex';
+              instructions.innerHTML = '<li>操作モードを選択してください</li>';
+              gameState = 'SELECT_DEVICE';
+            }
+          }
+        } else {
+          gpAButtonPressed = false; // ボタンを離したらフラグを解除
+        }
+
+        // 3. SELECT / BACKボタン (Btn 8) でコントロール選択画面に戻る
+        if (gp.buttons[8]?.pressed) {
+          stepPcControl.style.display = 'none';
+          stepDevice.style.display = 'flex';
+          deviceOverlay.style.display = 'flex';
+          instructions.innerHTML = '<li>操作モードを選択してください</li>';
+          gameState = 'SELECT_DEVICE';
+        }
+      }
+    }
+    
     let isPaused = (gameState === 'PAUSE');
     
     if (!isPaused) { audio.tickBGM(gameState, areaFrames); }
     
     if (gameState === 'SELECT_DEVICE') {
       starfield.update(); starfield.draw(); if (map) { map.update(false); map.draw(); }
-      ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.shadowBlur = 20; ctx.shadowColor = "#00ffff"; ctx.fillStyle = "#ffffff"; ctx.font = "bold 40px 'Segoe UI'"; ctx.textAlign = "center"; ctx.fillText("SELECT DEVICE", canvas.width / 2, 150);
-      ctx.shadowBlur = 10; ctx.shadowColor = "#ff0055"; ctx.fillStyle = "#220011"; ctx.fillRect(canvas.width / 2 - 140, 250, 280, 70); ctx.strokeStyle = "#ff0055"; ctx.lineWidth = 3; ctx.strokeRect(canvas.width / 2 - 140, 250, 280, 70); ctx.fillStyle = "#ffffff"; ctx.font = "bold 22px 'Segoe UI'"; ctx.shadowBlur = 0; ctx.fillText("PC (KEYBOARD)", canvas.width / 2, 292);
-      ctx.shadowBlur = 10; ctx.shadowColor = "#00ffaa"; ctx.fillStyle = "#002211"; ctx.fillRect(canvas.width / 2 - 140, 360, 280, 70); ctx.strokeStyle = "#00ffaa"; ctx.lineWidth = 3; ctx.strokeRect(canvas.width / 2 - 140, 360, 280, 70); ctx.fillStyle = "#ffffff"; ctx.font = "bold 22px 'Segoe UI'"; ctx.shadowBlur = 0; ctx.fillText("SMARTPHONE (TOUCH)", canvas.width / 2, 402);
       requestAnimationFrame(gameLoop); return;
     }
     
@@ -4037,7 +4358,8 @@ function gameLoop() {
         ctx.shadowBlur = 0; ctx.fillStyle = "#ffcc00"; ctx.font = "bold 20px 'Segoe UI'"; ctx.fillText("SCORE : " + d.pts, canvas.width / 2, 370);
         ctx.fillStyle = "#88aacc"; ctx.font = "15px 'Segoe UI'"; ctx.fillText(d.desc, canvas.width / 2, 420);
       }
-      ctx.shadowBlur = 0; ctx.fillStyle = (Math.floor(Date.now() / 500) % 2 === 0) ? "#ffffff" : "#555555"; ctx.font = "18px 'Segoe UI'"; ctx.textAlign = "center"; ctx.fillText(controlMode === 'PC' ? "PRESS SPACE TO START" : "TAP SCREEN TO START", canvas.width / 2, canvas.height / 2 + 180);
+      ctx.shadowBlur = 0; ctx.fillStyle = (Math.floor(Date.now() / 500) % 2 === 0) ? "#ffffff" : "#555555"; ctx.font = "18px 'Segoe UI'"; ctx.textAlign = "center"; 
+      ctx.fillText(controlMode === 'mobile' ? "TAP SCREEN TO START" : (controlMode === 'pc-controller' ? "PRESS START / A BUTTON" : "PRESS SPACE TO START"), canvas.width / 2, canvas.height / 2 + 180);
       requestAnimationFrame(gameLoop); return;
     }
 
@@ -4045,7 +4367,7 @@ function gameLoop() {
       starfield.update(); starfield.draw(); if (map) map.draw();
       ctx.fillStyle = "rgba(0,5,10,0.8)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.shadowBlur = 20; ctx.shadowColor = "#00ffff"; ctx.fillStyle = "#00ffff"; ctx.font = "bold 36px 'Segoe UI'"; ctx.textAlign = "center"; ctx.fillText("NEW HIGH SCORE!", canvas.width / 2, 100);
-      ctx.shadowBlur = 0; ctx.fillStyle = "#ffffff"; ctx.font = "18px 'Segoe UI'"; ctx.fillText(controlMode === 'PC' ? "TYPE INITIALS (MAX 3 CHARS)" : "CHECKING HIGH SCORE...", canvas.width / 2, 140);
+      ctx.shadowBlur = 0; ctx.fillStyle = "#ffffff"; ctx.font = "18px 'Segoe UI'"; ctx.fillText(controlMode === 'mobile' ? "CHECKING HIGH SCORE..." : "TYPE INITIALS (MAX 3 CHARS)", canvas.width / 2, 140);
       ctx.fillStyle = "#00ffff"; ctx.font = "bold 18px 'Courier New'"; ctx.fillText("RANK     SCORE      NAME   AREA", canvas.width / 2, 200);
       let ts = [...highScores]; ts.splice(rankIndex, 0, { name: playerName, score: score, area: areaLevel, isEditing: true }); ts = ts.slice(0, 5);
       ts.forEach((hs, i) => {
@@ -4055,7 +4377,7 @@ function gameLoop() {
         if (hs.isEditing) { ctx.fillText(playerName + (Math.floor(Date.now() / 300) % 2 === 0 && playerName.length < 3 ? "_" : ""), 255, y); } else { ctx.fillText(hs.name || 'AAA', 255, y); }
         let aV = hs.area || 1; let aNm = GREEK_ALPHABETS[(aV - 1) % 24] || 'UNKNOWN'; ctx.textAlign = "left"; ctx.fillText(aNm, 330, y); ctx.textAlign = "right"; ctx.fillText(aV < 10 ? " " + aV : aV.toString(), 440, y); ctx.textAlign = "left";
       });
-      if (controlMode === 'PC') { ctx.shadowBlur = 0; ctx.fillStyle = "#aaaaaa"; ctx.font = "16px 'Segoe UI'"; ctx.textAlign = "center"; ctx.fillText("TYPE AND PRESS ENTER", canvas.width / 2, 500); }
+      if (controlMode !== 'mobile') { ctx.shadowBlur = 0; ctx.fillStyle = "#aaaaaa"; ctx.font = "16px 'Segoe UI'"; ctx.textAlign = "center"; ctx.fillText("TYPE AND PRESS ENTER", canvas.width / 2, 500); }
       requestAnimationFrame(gameLoop); return;
     }
 
@@ -4065,7 +4387,7 @@ function gameLoop() {
       ctx.fillStyle = "#ff0044"; ctx.shadowBlur = 20; ctx.shadowColor = "#ff0044"; ctx.font = "bold 46px 'Segoe UI'"; ctx.textAlign = "center"; ctx.fillText("MISSION FAILED", canvas.width / 2, canvas.height / 2 - 20);
       ctx.shadowBlur = 0; ctx.fillStyle = "#ffffff"; ctx.font = "20px 'Segoe UI'"; let an = GREEK_ALPHABETS[(areaLevel - 1) % 24] || 'UNKNOWN';
       ctx.fillText(an + " " + areaLevel + " / SCORE: " + score.toString().padStart(8, "0"), canvas.width / 2, canvas.height / 2 + 30);
-      ctx.fillText(controlMode === 'PC' ? "F5 TO RETURN" : "TAP TO RETURN", canvas.width / 2, canvas.height / 2 + 80);
+      ctx.fillText(controlMode === 'mobile' ? "TAP TO RETURN" : "F5 TO RETURN", canvas.width / 2, canvas.height / 2 + 80);
       requestAnimationFrame(gameLoop); return;
     }
 
@@ -4152,11 +4474,6 @@ function gameLoop() {
       }
     }
 
-    if (controlMode === 'MOBILE' && (gameState === 'PLAYING' || gameState === 'BOSS_PHASE')) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.2)"; ctx.beginPath(); ctx.arc(canvas.width - 40, canvas.height - 40, 25, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "rgba(255, 255, 255, 0.8)"; ctx.fillRect(canvas.width - 48, canvas.height - 50, 6, 20); ctx.fillRect(canvas.width - 36, canvas.height - 50, 6, 20);
-    }
-
     if (extendAnimState !== 'OFF') {
       if (!isPaused) {
         let centerX = canvas.width / 2;
@@ -4194,7 +4511,12 @@ function gameLoop() {
     else if (sw) { ctx.fillStyle = (Math.floor(Date.now() / 150) % 2 === 0) ? '#ff0055' : '#550011'; ctx.font = 'bold 24px "Segoe UI"'; ctx.textAlign = 'center'; ctx.fillText(`WARNING: AREA BOSS APPROACHING`, canvas.width / 2, 120); } 
     else if (gameState === 'INTERVAL') { ctx.fillStyle = '#00ffff'; ctx.font = 'bold 32px "Segoe UI"'; ctx.textAlign = 'center'; ctx.fillText(`${aNm} ${areaLevel} CLEARED!`, canvas.width / 2, canvas.height / 2); if (bonusMessage !== "") { ctx.fillStyle = '#ffaa00'; ctx.font = 'bold 20px "Segoe UI"'; ctx.fillText(bonusMessage, canvas.width / 2, canvas.height / 2 + 40); } }
 
-    if (isPaused) { ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = "#00ffff"; ctx.font = "bold 40px 'Segoe UI'"; ctx.textAlign = "center"; ctx.fillText("PAUSE", canvas.width / 2, canvas.height / 2); ctx.fillStyle = "#ffffff"; ctx.font = "18px 'Segoe UI'"; ctx.fillText(controlMode === 'PC' ? "PRESS SPACE TO RESUME" : "TAP TO RESUME", canvas.width / 2, canvas.height / 2 + 40); }
+    if (isPaused) { 
+      ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(0, 0, canvas.width, canvas.height); 
+      ctx.fillStyle = "#00ffff"; ctx.font = "bold 40px 'Segoe UI'"; ctx.textAlign = "center"; ctx.fillText("PAUSE", canvas.width / 2, canvas.height / 2); 
+      ctx.fillStyle = "#ffffff"; ctx.font = "18px 'Segoe UI'"; 
+      ctx.fillText(controlMode === 'mobile' ? "TAP TO RESUME" : (controlMode === 'pc-controller' ? "PRESS START TO RESUME" : "PRESS SPACE TO RESUME"), canvas.width / 2, canvas.height / 2 + 40); 
+    }
 
   } catch (e) { console.error("Game Loop Exception:", e); }
   requestAnimationFrame(gameLoop);
